@@ -11,8 +11,8 @@ namespace AD_RFID
 {
     public struct G
     {
-       
-        public static FormMain FormMain;
+        public static Setting Setting=new Setting();
+         public static FormMain FormMain;
         public static HImage imgRaw = new HImage();
     }
     internal class Global

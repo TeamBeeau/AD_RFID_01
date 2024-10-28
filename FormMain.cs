@@ -10,9 +10,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Threading;
-using System.Windows.Forms;
 using libuser;
-
 using static System.Net.Mime.MediaTypeNames;
 
 using System.Diagnostics.Eventing.Reader;
@@ -83,215 +81,13 @@ namespace AD_RFID
         public HObject ho_MarkModelRegion = null;
         public bool TriggerMode = false;
         Thread LiveThread;
-        public bool SwitchModeOne(bool IsModeOne)
-        {
-            if (!IsModeOne)
-            {
-                TriggerMode = false;
-
-                int result = G.device.Parameters.SetEnumValueByString("TriggerMode", "Off");
-                if (result != MvError.MV_OK)
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                G.device.Parameters.SetEnumValueByString("TriggerMode", "On");
-                TriggerMode = true;
-                int result = G.device.Parameters.SetCommandValue("TriggerSoftware");
-                if (result != MvError.MV_OK)
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
-        public void CloseCamera()
-        {
-            // ch:取流标志位清零 | en:Reset flow flag bit
-           
-                StopGrab();
-            
-           
-            // ch:关闭设备 | en:Close Device
-            if (G.device != null)
-            {
-                G.device.Close();
-                G.device.Dispose();
-            }
-
-
-            SDKSystem.Finalize();
-        }
-        public bool StartGrab()
-        {
-            int result = G.device.StreamGrabber.StartGrabbing();
-            if (result != MvError.MV_OK)
-            {
-                if (LiveThread != null)
-                    LiveThread.Join();
-               // ShowErrorMsg("Start Grabbing Fail!", result);
-                return false;
-            }
-            return true;
-        }
-        public bool StopGrab()
-        {
-            if (LiveThread != null)
-                LiveThread.Join();
-
-            int result = G.device.StreamGrabber.StopGrabbing();
-            if (result != MvError.MV_OK)
-            {
-
-               // ShowErrorMsg("Start Grabbing Fail!", result);
-                return true;
-            }
-            return false;
-        }
-        public bool SetPara(float Exposure, float Gain)
-        {
-            if (G.device == null) return false;
-            G.device.Parameters.SetEnumValue("ExposureAuto", 0);
-            int result = G.device.Parameters.SetFloatValue("ExposureTime", Exposure);
-            if (result != MvError.MV_OK)
-            {
-                //ShowErrorMsg("Set Exposure Time Fail!", result);
-                return false;
-            }
-
-            G.device.Parameters.SetEnumValue("GainAuto", 0);
-            result = G.device.Parameters.SetFloatValue("Gain", Gain);
-            if (result != MvError.MV_OK)
-            {
-               // ShowErrorMsg("Set Gain Fail!", result);
-                return false;
-            }
-            return true;
-        }
-        public HImage Trigger()
-        {
-            if (G.device == null) return null;
-            if (!G.isGrabbing)
-            {
-                G.isGrabbing = StartGrab();
-            }
-            SwitchModeOne(true);
-
-            HImage hImage = new HImage();
-            int nRet = G.device.StreamGrabber.GetImageBuffer(1000, out G.frameOut);
-            if (MvError.MV_OK == nRet)
-            {
-                if (G.frameOut != null)
-                    hImage = new HImage("byte", (int)G.frameOut.Image.Width, (int)G.frameOut.Image.Height, G.frameOut.Image.PixelDataPtr);
-                G.device.StreamGrabber.FreeImageBuffer(G.frameOut);
-            }
-
-            return hImage;
-        }
-        public void Live(bool IsLive)
-        {
-
-            if (!IsLive)
-            {
-
-                if (G.isGrabbing)
-                    G.isGrabbing = StopGrab();
-                SwitchModeOne(true);
-            }
-            else
-            {
-
-                SwitchModeOne(false);
-                if (!G.isGrabbing)
-                    G.isGrabbing = StartGrab();
-
-                try
-                {
-                    LiveThread = new Thread(LiveProcess);
-                    LiveThread.Start();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Start thread failed!, " + ex.Message);
-                    throw;
-                }
-            }
-        }
-        public void LiveProcess()
-        {
-            while (G.isGrabbing)
-            {
-                int nRet = G.device.StreamGrabber.GetImageBuffer(1000, out G.frameOut);
-                if (MvError.MV_OK == nRet)
-                {
-                    //if (isRecord)
-                    //{
-                    //    G.device.VideoRecorder.InputOneFrame(G.frameOut.Image);
-                    //}
-
-                    //lock (saveImageLock)
-                    //{
-                    //    try
-                    //    {
-                    //        frameForSave = G.frameOut.Clone() as IFrameOut;
-                    //    }
-                    //    catch (Exception e)
-                    //    {
-                    //        MessageBox.Show("IFrameOut.Clone failed, " + e.Message);
-                    //        return;
-                    //    }
-                    //}
-
-#if !GDI_RENDER
-                    if (TriggerMode)
-                    {
-                        if (G.frameOut != null)
-                            G.imgRaw = new HImage("byte", (int)G.frameOut.Image.Width, (int)G.frameOut.Image.Height, G.frameOut.Image.PixelDataPtr);
-                    }
-                    else
-
-                        G.device.ImageRender.DisplayOneFrame(imgView.Handle, G.frameOut.Image);
-#else
-                    // 使用GDI绘制图像
-                    try
-                    {
-                        using (Bitmap bitmap = G.frameOut.Image.ToBitmap())
-                        {
-                            if (graphics == null)
-                            {
-                                graphics = pictureBox1.CreateGraphics();
-                            }
-
-                            Rectangle srcRect = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
-                            Rectangle dstRect = new Rectangle(0, 0, pictureBox1.Width, pictureBox1.Height);
-                            graphics.DrawImage(bitmap, dstRect, srcRect, GraphicsUnit.Pixel);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        G.device.StreamGrabber.FreeImageBuffer(G.frameOut);
-                        MessageBox.Show(e.Message);
-                        return;
-                    }
-#endif
-
-
-                    G.device.StreamGrabber.FreeImageBuffer(G.frameOut);
-                }
-                else
-                {
-                    G.device.StreamGrabber.FreeImageBuffer(G.frameOut);
-                    if (TriggerMode)
-                    {
-                        //G.imgRaw = new HImage("byte", (int)G.frameOut.Image.Width, (int)G.frameOut.Image.Height,G.frameOut.Image.PixelDataPtr);
-
-                        Thread.Sleep(5);
-                    }
-                }
-            }
-        }
+       
+     
+       
+       
+     
+     
+        
         private void btnSet_Click(object sender, EventArgs e)
         {
             //if (SettingCam == null)
@@ -2360,6 +2156,16 @@ namespace AD_RFID
         private void label4_Click(object sender, EventArgs e)
         {
 
+        }
+
+        private void FormMain_Load(object sender, EventArgs e)
+        {
+          
+        }
+
+        private void btnSet_Click_1(object sender, EventArgs e)
+        {
+            
         }
 
         private void txtProjectNo_TextChanged(object sender, EventArgs e)

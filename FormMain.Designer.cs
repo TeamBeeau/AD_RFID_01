@@ -211,7 +211,7 @@ namespace AD_RFID
             // 
             // BtnRun
             // 
-            this.BtnRun.BackColor = System.Drawing.Color.Green;
+            this.BtnRun.BackColor = System.Drawing.Color.Red;
             resources.ApplyResources(this.BtnRun, "BtnRun");
             this.BtnRun.ForeColor = System.Drawing.Color.White;
             this.BtnRun.Name = "BtnRun";
@@ -261,6 +261,7 @@ namespace AD_RFID
             this.btnSet.Image = global::AD_RFID.Properties.Resources.icons8_settings_40;
             this.btnSet.Name = "btnSet";
             this.btnSet.UseVisualStyleBackColor = false;
+            this.btnSet.Click += new System.EventHandler(this.btnSet_Click_1);
             // 
             // panel3
             // 
@@ -664,6 +665,7 @@ namespace AD_RFID
             this.Controls.Add(this.panel1);
             this.Name = "FormMain";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
+            this.Load += new System.EventHandler(this.FormMain_Load);
             this.panel1.ResumeLayout(false);
             this.panel12.ResumeLayout(false);
             this.panel15.ResumeLayout(false);
