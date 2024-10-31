@@ -509,13 +509,13 @@ namespace AD_RFID
             }
         }
         
-        private void btnSelectZoomRegion_Click(object sender, EventArgs e)
+        private void btnSelectZoomRegion_Click(object sender, EventArgs e)//image
         {
             try
             {
-                if (hWindow != null && G.imgRaw != null)
+                if (hWindow != null && image != null)
                 {
-                    HOperatorSet.GetImageSize(G.imgRaw, out var _, out var _);
+                    HOperatorSet.GetImageSize(image, out var _, out var _);
                     HOperatorSet.SetColor(hWindow, "red");
                     if (!panel1.Focused)
                     {
@@ -524,7 +524,7 @@ namespace AD_RFID
                     HOperatorSet.DrawRectangle1(hWindow, out var row, out var column, out var row2, out var column2);
                     HOperatorSet.SetPart(hWindow, row, column, row2, column2);
                     HOperatorSet.ClearWindow(hWindow);
-                    HOperatorSet.DispObj(G.imgRaw, hWindow);
+                    HOperatorSet.DispObj(image, hWindow);
                 }
                 else
                 {

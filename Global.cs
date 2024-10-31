@@ -13,6 +13,6 @@ namespace AD_RFID
     {
         public static Setting Setting=new Setting();
          public static FormMain FormMain;
-        public static HImage imgRaw = new HImage();
+       // public static HImage imgRaw = new HImage();
     }
 }
