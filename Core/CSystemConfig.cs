@@ -45,14 +45,24 @@ namespace Core
 			_obj = null;
 			try
 			{
-				using FileStream stream = new FileStream(file, FileMode.Open);
-				XmlSerializer xmlSerializer = new XmlSerializer(typeof(CSystemConfigData));
-				_obj = xmlSerializer.Deserialize(stream) as CSystemConfigData;
-				if (_obj == null)
-				{
-					_obj = new CSystemConfigData();
-				}
-			}
+                //using FileStream stream = new FileStream(file, FileMode.Open);
+                //XmlSerializer xmlSerializer = new XmlSerializer(typeof(CSystemConfigData));
+                //_obj = xmlSerializer.Deserialize(stream) as CSystemConfigData;
+                //if (_obj == null)
+                //{
+                //	_obj = new CSystemConfigData();
+                //}
+                using (FileStream stream = new FileStream(file, FileMode.Open))
+                {
+                    XmlSerializer xmlSerializer = new XmlSerializer(typeof(CSystemConfigData));
+                    _obj = xmlSerializer.Deserialize(stream) as CSystemConfigData;
+
+                    if (_obj == null)
+                    {
+                        _obj = new CSystemConfigData();
+                    }
+                }
+            }
 			catch (Exception ex)
 			{
 				MessageBox.Show(ex.Message);
@@ -74,9 +84,11 @@ namespace Core
 				{
 					return -1;
 				}
-				using FileStream stream = new FileStream(file, FileMode.Create);
-				XmlSerializer xmlSerializer = new XmlSerializer(typeof(CSystemConfigData));
-				xmlSerializer.Serialize(stream, _obj);
+				using (FileStream stream = new FileStream(file, FileMode.Create))
+				{
+					XmlSerializer xmlSerializer = new XmlSerializer(typeof(CSystemConfigData));
+					xmlSerializer.Serialize(stream, _obj);
+				}
 			}
 			catch
 			{

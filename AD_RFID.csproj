@@ -14,14 +14,14 @@
     <Deterministic>true</Deterministic>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <PlatformTarget>x86</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+    <WarningLevel>5</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -32,18 +32,47 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x86\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <WarningLevel>5</WarningLevel>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
+    <OutputPath>bin\x86\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
   <ItemGroup>
-    <Reference Include="ChoiceTech.Halcon.Control">
-      <HintPath>C:\Users\Nguyen Chi Tu\Desktop\CheckMark20191130 EN\Software\ChoiceTech.Halcon.Control.dll</HintPath>
+    <Reference Include="ChoiceTech.Halcon.Control, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Desktop\dllDRB\ChoiceTech.Halcon.Control.dll</HintPath>
     </Reference>
-    <Reference Include="halcondotnet">
-      <HintPath>C:\Users\Nguyen Chi Tu\Desktop\CheckMark20191130 EN\Software\halcondotnet.dll</HintPath>
+    <Reference Include="halcondotnet, Version=11.0.0.0, Culture=neutral, PublicKeyToken=4973bed59ddbf2b8, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Desktop\dllDRB\halcondotnet.dll</HintPath>
     </Reference>
-    <Reference Include="libuser">
-      <HintPath>C:\Users\Nguyen Chi Tu\Desktop\CheckMark20191130 EN\Software\libuser.dll</HintPath>
+    <Reference Include="libuser, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Desktop\dllDRB\libuser.dll</HintPath>
+    </Reference>
+    <Reference Include="MvCameraControl.Net, Version=2.2.0.4, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Desktop\dllDRB\MvCameraControl.Net.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Management" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -55,6 +84,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CallbackDelegate.cs" />
     <Compile Include="Core\CConfigOperator.cs" />
     <Compile Include="Core\CImage.cs" />
     <Compile Include="Core\CLogAssistant.cs" />
@@ -66,13 +96,8 @@
     <Compile Include="Core\CSystemConfig.cs" />
     <Compile Include="Core\CSystemConfigData.cs" />
     <Compile Include="Core.include\ELogLevel.cs" />
-    <Compile Include="Form1.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Form1.Designer.cs">
-      <DependentUpon>Form1.cs</DependentUpon>
-    </Compile>
     <Compile Include="Core.include\ICLogAssistant.cs" />
+    <Compile Include="DASK.cs" />
     <Compile Include="FormMain.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -308,6 +333,52 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\1-removebg-preview.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Analyzer Include="..\..\..\Desktop\dllDRB\ChoiceTech.Halcon.Control.dll" />
+    <Analyzer Include="..\..\..\Desktop\dllDRB\hAcqGenICamTL.dll" />
+    <Analyzer Include="..\..\..\Desktop\dllDRB\hAcqGenICamTLxl.dll" />
+    <Analyzer Include="..\..\..\Desktop\dllDRB\halcon.dll" />
+    <Analyzer Include="..\..\..\Desktop\dllDRB\halcondotnet.dll" />
+    <Analyzer Include="..\..\..\Desktop\dllDRB\libuser.dll" />
+    <Analyzer Include="..\..\..\Desktop\dllDRB\MvCameraControl.Net.dll" />
+    <Analyzer Include="..\..\..\Desktop\dllDRB\PCI-Dask.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icons8-camera-50.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icons8-camera-30.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icons8-camera-50 %281%29.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\1.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icons8-camera-30 %281%29.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icons8-camera-30 %282%29.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icons8-click-on-zoom-in-or-out-isolated-on-white-background-24.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icons8-click-on-zoom-in-or-out-isolated-on-white-background-24 %281%29.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icons8-click-on-zoom-in-or-out-isolated-on-white-background-50.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icons8-reset-50.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icons8-live-30.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icons8-save-30.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

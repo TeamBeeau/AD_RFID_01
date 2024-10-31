@@ -24,9 +24,11 @@ public abstract class CRecipeCameraOperator
 		_obj = null;
 		try
 		{
-			using FileStream stream = new FileStream(file, FileMode.Open);
-			XmlSerializer xmlSerializer = new XmlSerializer(typeof(object));
-			_obj = xmlSerializer.Deserialize(stream);
+				using (FileStream stream = new FileStream(file, FileMode.Open))
+				{
+					XmlSerializer xmlSerializer = new XmlSerializer(typeof(object));
+					_obj = xmlSerializer.Deserialize(stream);
+				}
 		}
 		catch
 		{
@@ -48,9 +50,11 @@ public abstract class CRecipeCameraOperator
 			{
 				return -1;
 			}
-			using FileStream stream = new FileStream(file, FileMode.Create);
-			XmlSerializer xmlSerializer = new XmlSerializer(typeof(object));
-			xmlSerializer.Serialize(stream, _obj);
+				using (FileStream stream = new FileStream(file, FileMode.Create))
+				{
+					XmlSerializer xmlSerializer = new XmlSerializer(typeof(object));
+					xmlSerializer.Serialize(stream, _obj);
+				}
 		}
 		catch
 		{

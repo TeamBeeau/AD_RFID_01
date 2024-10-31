@@ -3,6 +3,7 @@ using System.IO;
 using System.Windows.Forms;
 using HalconDotNet;
 using System.Runtime.InteropServices;
+using AD_RFID;
 
 namespace Core
 {
@@ -22,23 +23,25 @@ namespace Core
 		public HFramegrabber AcqHandleCK = new HFramegrabber();
 
 		public HImage imageCK = new HImage();
-
-		public static CImage instance => _ints;
+        
+        public static CImage instance => _ints;
 		public int IniImage(string strCameraPort, string strCameraType)
 		{
+	
 			try
 			{
 				AcqHandle1.OpenFramegrabber(strCameraPort, 0, 0, 0, 0, 0, 0, "progressive", -1, "default", -1.0, "false", "default", strCameraType, 0, -1);
 				HOperatorSet.SetFramegrabberParam(AcqHandle1, "ExposureTime", CRecipeCamera.instance.config.iniUpExposureTime);
 				HOperatorSet.SetFramegrabberParam(AcqHandle1, "Gain", CRecipeCamera.instance.config.iniUpCameraGain);
-
 			}
 			catch (Exception)
 			{
-				MessageBox.Show("UpCamera initializtion fail！");
+				G.FormMain.lbCam.Text = "Camera Disconnected";
+				//MessageBox.Show("UpCamera initializtion fail！");
 				return 0;
 			}
-			return 1;
+            G.FormMain.lbCam.Text = "Camera Connected";
+            return 1;
 		}
 
 		public int IniImageDW(string strCameraPort, string strCameraType)

@@ -45,12 +45,14 @@ namespace Core
 			string path = Application.StartupPath + "\\partname\\" + file;
 			try
 			{
-				using FileStream stream = new FileStream(path, FileMode.Open);
-				XmlSerializer xmlSerializer = new XmlSerializer(typeof(CRecipeCameraData));
-				_obj = xmlSerializer.Deserialize(stream) as CRecipeCameraData;
-				if (_obj == null)
+				using (FileStream stream = new FileStream(path, FileMode.Open))
 				{
-					_obj = new CRecipeCameraData();
+					XmlSerializer xmlSerializer = new XmlSerializer(typeof(CRecipeCameraData));
+					_obj = xmlSerializer.Deserialize(stream) as CRecipeCameraData;
+					if (_obj == null)
+					{
+						_obj = new CRecipeCameraData();
+					}
 				}
 			}
 			catch
@@ -74,9 +76,11 @@ namespace Core
 				{
 					return -1;
 				}
-				using FileStream stream = new FileStream(path, FileMode.Create);
-				XmlSerializer xmlSerializer = new XmlSerializer(typeof(CRecipeCameraData));
-				xmlSerializer.Serialize(stream, _obj);
+				using (FileStream stream = new FileStream(path, FileMode.Create))
+				{
+					XmlSerializer xmlSerializer = new XmlSerializer(typeof(CRecipeCameraData));
+					xmlSerializer.Serialize(stream, _obj);
+				}
 			}
 			catch
 			{

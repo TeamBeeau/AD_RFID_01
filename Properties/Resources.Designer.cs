@@ -63,6 +63,16 @@ namespace AD_RFID.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap _1 {
+            get {
+                object obj = ResourceManager.GetObject("1", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap _1_removebg_preview {
             get {
                 object obj = ResourceManager.GetObject("_1_removebg_preview", resourceCulture);
@@ -173,6 +183,56 @@ namespace AD_RFID.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap icons8_camera_30 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-camera-30", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap icons8_camera_30__1_ {
+            get {
+                object obj = ResourceManager.GetObject("icons8-camera-30 (1)", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap icons8_camera_30__2_ {
+            get {
+                object obj = ResourceManager.GetObject("icons8-camera-30 (2)", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap icons8_camera_50 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-camera-50", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap icons8_camera_50__1_ {
+            get {
+                object obj = ResourceManager.GetObject("icons8-camera-50 (1)", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap icons8_camera_off_40 {
             get {
                 object obj = ResourceManager.GetObject("icons8_camera_off_40", resourceCulture);
@@ -246,6 +306,36 @@ namespace AD_RFID.Properties {
         internal static System.Drawing.Bitmap icons8_click_60__1_ {
             get {
                 object obj = ResourceManager.GetObject("icons8_click_60__1_", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap icons8_click_on_zoom_in_or_out_isolated_on_white_background_24 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-click-on-zoom-in-or-out-isolated-on-white-background-24", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap icons8_click_on_zoom_in_or_out_isolated_on_white_background_24__1_ {
+            get {
+                object obj = ResourceManager.GetObject("icons8-click-on-zoom-in-or-out-isolated-on-white-background-24 (1)", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap icons8_click_on_zoom_in_or_out_isolated_on_white_background_50 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-click-on-zoom-in-or-out-isolated-on-white-background-50", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -393,6 +483,16 @@ namespace AD_RFID.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap icons8_live_30 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-live-30", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap icons8_live_40 {
             get {
                 object obj = ResourceManager.GetObject("icons8_live_40", resourceCulture);
@@ -483,6 +583,16 @@ namespace AD_RFID.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap icons8_reset_50 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-reset-50", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap icons8_reset_60 {
             get {
                 object obj = ResourceManager.GetObject("icons8_reset_60", resourceCulture);
@@ -506,6 +616,16 @@ namespace AD_RFID.Properties {
         internal static System.Drawing.Bitmap icons8_reset_80 {
             get {
                 object obj = ResourceManager.GetObject("icons8_reset_80", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap icons8_save_30 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-save-30", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
