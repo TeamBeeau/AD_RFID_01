@@ -653,6 +653,16 @@ namespace AD_RFID.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap icons8_save_as_30 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-save-as-30", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap icons8_setting_50 {
             get {
                 object obj = ResourceManager.GetObject("icons8_setting_50", resourceCulture);

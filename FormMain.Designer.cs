@@ -38,6 +38,7 @@ namespace AD_RFID
             this.panel15 = new System.Windows.Forms.Panel();
             this.panel37 = new System.Windows.Forms.Panel();
             this.panel7 = new System.Windows.Forms.Panel();
+            this.btnSaveAs = new System.Windows.Forms.Button();
             this.btnLoadProjectModel = new System.Windows.Forms.Button();
             this.lbPN = new System.Windows.Forms.Label();
             this.txtProjectNo = new System.Windows.Forms.TextBox();
@@ -100,6 +101,7 @@ namespace AD_RFID
             this.lbOK = new System.Windows.Forms.Label();
             this.lbNG = new System.Windows.Forms.Label();
             this.panel4 = new System.Windows.Forms.Panel();
+            this.label1 = new System.Windows.Forms.Label();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.txtboxHistory = new System.Windows.Forms.TextBox();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
@@ -110,7 +112,7 @@ namespace AD_RFID
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.txtDealWithTime = new System.Windows.Forms.ToolStripStatusLabel();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
-            this.label1 = new System.Windows.Forms.Label();
+            this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.panel1.SuspendLayout();
             this.panel12.SuspendLayout();
             this.panel15.SuspendLayout();
@@ -173,11 +175,22 @@ namespace AD_RFID
             // 
             // panel7
             // 
+            this.panel7.Controls.Add(this.btnSaveAs);
             this.panel7.Controls.Add(this.btnLoadProjectModel);
             this.panel7.Controls.Add(this.lbPN);
             this.panel7.Controls.Add(this.txtProjectNo);
             resources.ApplyResources(this.panel7, "panel7");
             this.panel7.Name = "panel7";
+            // 
+            // btnSaveAs
+            // 
+            this.btnSaveAs.BackColor = System.Drawing.SystemColors.ButtonFace;
+            resources.ApplyResources(this.btnSaveAs, "btnSaveAs");
+            this.btnSaveAs.ForeColor = System.Drawing.Color.Black;
+            this.btnSaveAs.Image = global::AD_RFID.Properties.Resources.icons8_save_as_30;
+            this.btnSaveAs.Name = "btnSaveAs";
+            this.btnSaveAs.UseVisualStyleBackColor = false;
+            this.btnSaveAs.Click += new System.EventHandler(this.btnSaveAs_Click);
             // 
             // btnLoadProjectModel
             // 
@@ -658,6 +671,12 @@ namespace AD_RFID
             resources.ApplyResources(this.panel4, "panel4");
             this.panel4.Name = "panel4";
             // 
+            // label1
+            // 
+            resources.ApplyResources(this.label1, "label1");
+            this.label1.ForeColor = System.Drawing.Color.Black;
+            this.label1.Name = "label1";
+            // 
             // pictureBox1
             // 
             resources.ApplyResources(this.pictureBox1, "pictureBox1");
@@ -717,12 +736,6 @@ namespace AD_RFID
             // timer1
             // 
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
-            // 
-            // label1
-            // 
-            resources.ApplyResources(this.label1, "label1");
-            this.label1.ForeColor = System.Drawing.Color.Black;
-            this.label1.Name = "label1";
             // 
             // FormMain
             // 
@@ -857,5 +870,7 @@ namespace AD_RFID
         private Label lbOK;
         private Label lbNG;
         private Label label1;
+        private Button btnSaveAs;
+        private System.ComponentModel.BackgroundWorker backgroundWorker1;
     }
 }

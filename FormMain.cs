@@ -23,6 +23,9 @@ using System.Linq;
 using Application = System.Windows.Forms.Application;
 using System.Threading.Tasks;
 using System.Reflection.Emit;
+using OpenCvSharp;
+using System.Web.UI.WebControls;
+using ScrollBars = System.Windows.Forms.ScrollBars;
 
 namespace AD_RFID
 {
@@ -33,6 +36,12 @@ namespace AD_RFID
             InitializeComponent();
             G.FormMain = this;
         }
+
+        public string modelImagePathSA;//note
+        public string ModelPathSA;
+        public string ModelRegionPathSA;
+        public string strFileNameSA;
+
         public bool bDWCameraLive = false;
         public bool UpDown = true;
         private HWindow hWindow01 = new HWindow();
@@ -105,13 +114,14 @@ namespace AD_RFID
         public bool TriggerMode = false;
         Thread LiveThread;
        
-        public void GrapeImage1()
+        public async void GrapeImage1()
         {
             try
             {
                 Thread.Sleep(50);
                 HOperatorSet.CountSeconds(out hv_StartTime);
-                image.GrabImage(AcqHandle);
+               await ImgBest(5);
+             //   image.GrabImage(AcqHandle);
                 image.GetImageSize(out hv_imageWidth, out hv_imageHeight);
                 hwindowctl.HalconWindow.SetPart(0, 0, hv_imageHeight - 1, hv_imageWidth - 1);
                 hwindowctl.HalconWindow.DispObj(image);
@@ -555,6 +565,48 @@ namespace AD_RFID
             {
             }
         }
+
+    
+        public async Task ImgBest(int numThread )
+        {
+            var blurValues = new List<Task<(HImage, double)>>();
+            // Khởi tạo Task kiểm tra độ mờ cho từng ảnh
+         for(int i = 0;i < numThread; i++) 
+            {
+                HImage image = new HImage();
+                image.GrabImage(AcqHandle);
+                blurValues.Add(Task.Run(() => (image, CalculateBlur(image))));
+            }
+
+            // Đợi tất cả các Task hoàn tất
+            Task.WhenAll(blurValues).Wait();
+
+            // Lấy kết quả độ mờ của từng ảnh
+            var blurResults = blurValues.Select(task => task.Result).ToList();
+
+            // So sánh độ mờ giữa các ảnh
+            var mostBlurredImage = blurResults.OrderByDescending(result => result.Item2).First();
+
+            image= mostBlurredImage.Item1 as HImage;
+        }
+        static double CalculateBlur(HImage image)
+        {
+            HTuple Type, w, h;
+            IntPtr intPtr = image.GetImagePointer1(out Type, out w, out h);
+            Mat raw = new Mat(Convert.ToInt32(h.ToString()), Convert.ToInt32(w.ToString()), MatType.CV_8UC1, intPtr);
+            Mat gray = new Mat();
+            Mat laplacianImage = new Mat();
+            Cv2.CvtColor(raw, gray, ColorConversionCodes.BGR2GRAY);
+            Cv2.Laplacian(gray, laplacianImage, MatType.CV_64F);
+            Scalar mean, stddev;
+            Cv2.MeanStdDev(laplacianImage, out mean, out stddev);
+            return stddev[0] * stddev[0];
+        }
+        //  public double compareImg(HImage img)
+        //   {
+
+        // }
+
         public bool CreateMarkRegion(HTuple hv_WindowID)
         {
             HObject[] OTemp = new HObject[20];
@@ -638,6 +690,9 @@ namespace AD_RFID
             FolderBrowserDialog dialog = new FolderBrowserDialog();
             dialog.Description = "please select folder";
             dialog.SelectedPath = szPath;
+
+
+
             string foldPath = "";
             string ModelPath = "";
             string ModelRegionPath = "";
@@ -653,6 +708,10 @@ namespace AD_RFID
                     ModelPath = foldPath + "\\Model.shm";
                     ModelRegionPath = foldPath + "\\ModelRegion.reg";
                     modelImagePath = foldPath + "\\ModelImage.bmp";
+
+                    ModelPathSA = ModelPath;//note
+                    modelImagePathSA = modelImagePath;//note
+                    ModelRegionPathSA = ModelRegionPath;//note
                 }
                 catch (Exception)
                 {
@@ -664,6 +723,9 @@ namespace AD_RFID
                 CRecipeCamera.instance.config.iniProjectNO = txtProjectNo.Text.ToString();
                 CRecipeCamera.instance.SaveConfig("SystemConfig.xml");
                 string strFileName2 = txtProjectNo.Text + "CameraConfig.xml";
+
+                strFileNameSA = strFileName2;//note
+
                 CRecipeCamera.instance.LoadConfig(strFileName2);
                 G.Setting.txtUpCameraTime.Text = Convert.ToString(CRecipeCamera.instance.config.iniUpCameraTime);
                 G.Setting.txtUpExposureTime.Text = Convert.ToString(CRecipeCamera.instance.config.iniUpExposureTime);
@@ -1793,7 +1855,6 @@ namespace AD_RFID
                 }
                 if (hv_Number < hv_Score.Length)
                 {
-                    
                     set_display_font(hv_WindowID, 20, "mono", "true", "false");
                     HOperatorSet.SetTposition(hv_WindowID, 50, 50);
                     HOperatorSet.SetColor(hv_WindowID, "red");
@@ -2757,8 +2818,16 @@ namespace AD_RFID
             {
                 btnUp.Enabled = false;
                 btnDown.Enabled = true;
-                btnSetModelPagePOS.Text = "SetPosition";
-                btnCreateMarkModel.Text = "SetMark";
+                if (Lang)
+                {
+                    btnSetModelPagePOS.Text = "SetPosition";
+                    btnCreateMarkModel.Text = "SetMark";
+                }
+                else
+                {
+                    btnSetModelPagePOS.Text = "Thiết Lập Vị Trí";
+                    btnCreateMarkModel.Text = "Tạo Mô Hình";
+                }
                 btnSelectZoomRegion.Visible = true;
                 btnResetImage.Visible = true;
                 btnUp.BackColor = Color.Transparent;
@@ -2800,8 +2869,16 @@ namespace AD_RFID
             {
                 btnUp.Enabled = true;
                 btnDown.Enabled = false;
-                btnSetModelPagePOS.Text = "DrawRegion";
-                btnCreateMarkModel.Text = "ModelCreate";
+                if (Lang)
+                {
+                    btnSetModelPagePOS.Text = "DrawRegion";
+                    btnCreateMarkModel.Text = "ModelCreate";
+                }
+                else
+                {
+                    btnSetModelPagePOS.Text = "Vẽ Khu Vực";
+                    btnCreateMarkModel.Text = "Tạo Mô Hình";
+                }
                 btnSelectZoomRegion.Visible = false;
                 btnResetImage.Visible = false;
                 btnUp.BackColor = Color.FromArgb(224, 224, 224);
@@ -2837,8 +2914,11 @@ namespace AD_RFID
             else
             {
                 lbOK.Text = valueF;
-                lbNG.Text = (Convert.ToInt16(valueH)  - Convert.ToInt16(valueF)).ToString(); 
-
+                lbNG.Text = (Convert.ToInt16(valueH)  - Convert.ToInt16(valueF)).ToString();
+                if (Convert.ToInt16(lbNG.Text) < 0)
+                {
+                    lbNG.Text = "0";
+                }
             }
         }
         public bool Lang = true;
@@ -2869,6 +2949,7 @@ namespace AD_RFID
                     btnSetModelPagePOS.Text = "DrawRegion";
                     btnCreateMarkModel.Text = "ModelCreate";
                 }
+                btnSaveAs.Text = "Save As";
                 btnSelectZoomRegion.Text = "SelectZoomRegion";
                 btnResetImage.Text = "ResetImage";
                 label32.Text = "OK_Rate:";
@@ -2905,6 +2986,7 @@ namespace AD_RFID
             }
             else
             {
+                btnSaveAs.Text = "Lưu Dự Án Tại";
                 lbPN.Text = "Dự án";
                 btnFolder.Text = "Kiểm tra";
                 btnSaveImage.Text = "Lưu Ảnh";
@@ -2917,11 +2999,10 @@ namespace AD_RFID
                 label3.Text = "Huấn luyện";
                 btnUp.Text = "Camera Trên";
                 btnDown.Text = "Camera Dưới";
-
                 if (UpDown)
                 {
-                    btnSetModelPagePOS.Text = "Thiết Lập Vị Trí";
-                    btnCreateMarkModel.Text = "Đánh Dấu";
+                    btnSetModelPagePOS.Text = "Vẽ Vị Trí Trang";
+                    btnCreateMarkModel.Text = "Tạo Mô Hình";
                 }
                 else
                 {
@@ -2986,6 +3067,79 @@ namespace AD_RFID
                 {
                     MessageBox.Show("Please Check Connect Card PCI");
                 }
+            }
+        }
+        private void btnSaveAs_Click(object sender, EventArgs e)
+        {
+            using (FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog())
+            {
+                folderBrowserDialog.Description = "Choose Destination Folder to Save Model";
+
+                if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
+                {
+                    string destinationFolderPath = folderBrowserDialog.SelectedPath;
+                    string originalFolderName = txtProjectNo.Text;
+                    string newFolderName = Microsoft.VisualBasic.Interaction.InputBox("Enter new folder name", "Rename Folder", originalFolderName);
+
+                    if (string.IsNullOrEmpty(newFolderName))
+                    {
+                        MessageBox.Show("Save operation was canceled.");
+                        return;
+                    }
+
+                    string mainProjectPath = Path.Combine(Application.StartupPath, "Project", "UpCameraModel", originalFolderName);
+
+                    string cameraConfigFilePath = Path.Combine(Application.StartupPath, "partname", originalFolderName + "CameraConfig.xml");
+
+                    string newMainProjectPath = Path.Combine(destinationFolderPath, newFolderName);
+                    string newCameraConfigFilePath = Path.Combine(destinationFolderPath, newFolderName + "CameraConfig.xml");
+
+                    try
+                    {
+                        DirectoryInfo mainDir = new DirectoryInfo(mainProjectPath);
+                        if (!mainDir.Exists)
+                        {
+                            MessageBox.Show("Source directory does not exist: " + mainProjectPath);
+                            return;
+                        }
+                        CopyDirectoryContents(mainProjectPath, newMainProjectPath);
+
+                        if (File.Exists(cameraConfigFilePath))
+                        {
+                            File.Copy(cameraConfigFilePath, newCameraConfigFilePath, true);
+                        }
+                        else
+                        {
+                            MessageBox.Show("Camera config file does not exist: " + cameraConfigFilePath);
+                        }
+
+                        MessageBox.Show("Model folder and CameraConfig file saved successfully to: " + destinationFolderPath);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Error saving folders and file: " + ex.Message);
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Please select a folder to save the project.");
+                }
+            }
+        }
+
+        private void CopyDirectoryContents(string sourceDir, string destDir)
+        {
+            Directory.CreateDirectory(destDir);
+
+            foreach (FileInfo file in new DirectoryInfo(sourceDir).GetFiles())
+            {
+                file.CopyTo(Path.Combine(destDir, file.Name), true);
+            }
+
+            foreach (DirectoryInfo subdir in new DirectoryInfo(sourceDir).GetDirectories())
+            {
+                string destSubDir = Path.Combine(destDir, subdir.Name);
+                CopyDirectoryContents(subdir.FullName, destSubDir);
             }
         }
     }

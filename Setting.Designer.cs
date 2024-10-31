@@ -34,13 +34,14 @@ namespace AD_RFID
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.label23 = new System.Windows.Forms.Label();
             this.panel2 = new System.Windows.Forms.Panel();
+            this.label23 = new System.Windows.Forms.Label();
             this.chkboxUnEnbleUpCamera = new System.Windows.Forms.CheckBox();
             this.label17 = new System.Windows.Forms.Label();
             this.label15 = new System.Windows.Forms.Label();
             this.btnSaveCheckPra = new System.Windows.Forms.Button();
             this.label13 = new System.Windows.Forms.Label();
+            this.txtThresholdValue = new System.Windows.Forms.TextBox();
             this.txtMatchValue = new System.Windows.Forms.TextBox();
             this.txtScale = new System.Windows.Forms.TextBox();
             this.txtRightOffset = new System.Windows.Forms.TextBox();
@@ -74,7 +75,6 @@ namespace AD_RFID
             this.label2 = new System.Windows.Forms.Label();
             this.txtUpCameraGain = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
-            this.txtThresholdValue = new System.Windows.Forms.TextBox();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.panel48 = new System.Windows.Forms.Panel();
             this.chkboxUnEnbleDownCamera = new System.Windows.Forms.CheckBox();
@@ -152,19 +152,6 @@ namespace AD_RFID
             this.panel1.Size = new System.Drawing.Size(898, 1124);
             this.panel1.TabIndex = 1;
             // 
-            // label23
-            // 
-            this.label23.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.label23.ImageAlign = System.Drawing.ContentAlignment.TopCenter;
-            this.label23.Location = new System.Drawing.Point(394, 209);
-            this.label23.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label23.Name = "label23";
-            this.label23.Size = new System.Drawing.Size(138, 48);
-            this.label23.TabIndex = 4;
-            this.label23.Text = "Binary:";
-            this.label23.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.label23.Visible = false;
-            // 
             // panel2
             // 
             this.panel2.BackColor = System.Drawing.SystemColors.Control;
@@ -198,6 +185,19 @@ namespace AD_RFID
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(898, 410);
             this.panel2.TabIndex = 3;
+            // 
+            // label23
+            // 
+            this.label23.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.label23.ImageAlign = System.Drawing.ContentAlignment.TopCenter;
+            this.label23.Location = new System.Drawing.Point(394, 209);
+            this.label23.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label23.Name = "label23";
+            this.label23.Size = new System.Drawing.Size(138, 48);
+            this.label23.TabIndex = 4;
+            this.label23.Text = "Binary:";
+            this.label23.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.label23.Visible = false;
             // 
             // chkboxUnEnbleUpCamera
             // 
@@ -261,6 +261,16 @@ namespace AD_RFID
             this.label13.TabIndex = 3;
             this.label13.Text = "mm";
             this.label13.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // txtThresholdValue
+            // 
+            this.txtThresholdValue.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.txtThresholdValue.Location = new System.Drawing.Point(540, 211);
+            this.txtThresholdValue.Margin = new System.Windows.Forms.Padding(4, 2, 4, 2);
+            this.txtThresholdValue.Name = "txtThresholdValue";
+            this.txtThresholdValue.Size = new System.Drawing.Size(172, 44);
+            this.txtThresholdValue.TabIndex = 0;
+            this.txtThresholdValue.Visible = false;
             // 
             // txtMatchValue
             // 
@@ -540,6 +550,7 @@ namespace AD_RFID
             this.label24.TabIndex = 8;
             this.label24.Text = "ms";
             this.label24.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.label24.Visible = false;
             // 
             // btnSaveCameraPra
             // 
@@ -566,6 +577,7 @@ namespace AD_RFID
             this.label21.TabIndex = 4;
             this.label21.Text = "Send Delay:";
             this.label21.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.label21.Visible = false;
             // 
             // label12
             // 
@@ -587,6 +599,7 @@ namespace AD_RFID
             this.txtDelaySendTime.Name = "txtDelaySendTime";
             this.txtDelaySendTime.Size = new System.Drawing.Size(202, 51);
             this.txtDelaySendTime.TabIndex = 1;
+            this.txtDelaySendTime.Visible = false;
             // 
             // label5
             // 
@@ -669,15 +682,6 @@ namespace AD_RFID
             this.label6.TabIndex = 2;
             this.label6.Text = "Up Camera Parameter";
             this.label6.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // txtThresholdValue
-            // 
-            this.txtThresholdValue.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.txtThresholdValue.Location = new System.Drawing.Point(540, 211);
-            this.txtThresholdValue.Margin = new System.Windows.Forms.Padding(4, 2, 4, 2);
-            this.txtThresholdValue.Name = "txtThresholdValue";
-            this.txtThresholdValue.Size = new System.Drawing.Size(172, 44);
-            this.txtThresholdValue.TabIndex = 0;
             // 
             // tabPage2
             // 
