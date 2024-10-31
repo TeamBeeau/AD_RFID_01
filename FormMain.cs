@@ -48,7 +48,7 @@ namespace AD_RFID
         private HTuple hv_Row02;
         private HTuple hv_Col02;
         private HObject ho_Rect;
-        private HImage imageDown = new HImage();
+        public HImage imageDown = new HImage();
         public int nSaveNGimageDay = 0;
         public int nStartSaveMonth;
         public int nStartSaveDay;
@@ -85,7 +85,7 @@ namespace AD_RFID
         public bool bUpCameraLive = false;
         public bool bModelIsOK = false;
         private HWindow hWindow = new HWindow();
-        private HImage image = new HImage();
+        public HImage image = new HImage();
         private IntPtr IntPtr;
         private readonly HalconDotNet.HWindowControl hwindowctl = new HWindowControl();//note1
         private readonly HalconDotNet.HWindowControl hwindowctl02 = new HWindowControl();
