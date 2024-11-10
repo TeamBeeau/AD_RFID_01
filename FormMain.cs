@@ -26,6 +26,15 @@ using System.Reflection.Emit;
 using OpenCvSharp;
 using System.Web.UI.WebControls;
 using ScrollBars = System.Windows.Forms.ScrollBars;
+using Point = System.Drawing.Point;
+using WindowsInput;
+using AutoIt;
+using OpenCvSharp.Extensions;
+using System.Data.SqlClient;
+using System.Data;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
+using System.Net.NetworkInformation;
+
 
 namespace AD_RFID
 {
@@ -113,17 +122,18 @@ namespace AD_RFID
         public HObject ho_MarkModelRegion = null;
         public bool TriggerMode = false;
         Thread LiveThread;
-       
-        public async void GrapeImage1()
+
+        public void GrapeImage1()
         {
             try
             {
                 Thread.Sleep(50);
                 HOperatorSet.CountSeconds(out hv_StartTime);
-               await ImgBest(5);
-             //   image.GrabImage(AcqHandle);
+                // await ImgBest(5);
+                image.GrabImage(AcqHandle);
                 image.GetImageSize(out hv_imageWidth, out hv_imageHeight);
                 hwindowctl.HalconWindow.SetPart(0, 0, hv_imageHeight - 1, hv_imageWidth - 1);
+                // view.Location = new Point(pView.Width / 2 - hv_imageWidth / 2, pView.Height / 2 - hv_imageHeight / 2);
                 hwindowctl.HalconWindow.DispObj(image);
                 HOperatorSet.SetTposition(hWindow, 10, 10);
                 HOperatorSet.WriteString(hWindow, "UpCamera");
@@ -131,6 +141,7 @@ namespace AD_RFID
                 HOperatorSet.CountSeconds(out hv_EndTime);
                 HTuple hv_ActTime = hv_EndTime - hv_StartTime;
                 HOperatorSet.SetTposition(hWindow, 100, 100);
+
                 HOperatorSet.WriteString(hWindow, hv_ActTime);
             }
             catch (Exception)
@@ -518,7 +529,7 @@ namespace AD_RFID
                 return false;
             }
         }
-        
+
         private void btnSelectZoomRegion_Click(object sender, EventArgs e)//image
         {
             try
@@ -533,6 +544,7 @@ namespace AD_RFID
                     }
                     HOperatorSet.DrawRectangle1(hWindow, out var row, out var column, out var row2, out var column2);
                     HOperatorSet.SetPart(hWindow, row, column, row2, column2);
+                    //  view.Location = new Point(pView.Width / 2 - view.Width / 2, pView.Height / 2 - view.Height / 2);
                     HOperatorSet.ClearWindow(hWindow);
                     HOperatorSet.DispObj(image, hWindow);
                 }
@@ -554,6 +566,7 @@ namespace AD_RFID
                 {
                     HOperatorSet.GetImageSize(image, out var hvWidth, out var hvHeight);
                     HOperatorSet.SetPart(hWindow, 0, 0, hvHeight - 1, hvWidth - 1);
+                    // view.Location = new Point(pView.Width / 2 - hvWidth / 2, pView.Height / 2 - hvHeight / 2);
                     HOperatorSet.DispObj(image, hWindow);
                 }
                 else
@@ -561,21 +574,69 @@ namespace AD_RFID
                     MessageBox.Show("ERROR:请先加载图片！");
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                MessageBox.Show(ex.Message);
             }
         }
 
-    
-        public async Task ImgBest(int numThread )
+
+        List<HImage> listImgs = new List<HImage>();
+        static double CalculateArea(HImage img, int i)
+        {
+            HTuple Type, w, h;
+            IntPtr intPtr = img.GetImagePointer1(out Type, out w, out h);
+
+            Mat raw = new Mat(Convert.ToInt32(h.ToString()), Convert.ToInt32(w.ToString()), MatType.CV_8UC1, intPtr);
+            Mat gray = raw.Clone();
+
+            Cv2.Threshold(raw, gray, 50, 255, ThresholdTypes.Otsu);
+            gray = gray.PyrDown();
+            gray = gray.PyrDown();
+            OpenCvSharp.Point[][] contours;
+            HierarchyIndex[] hierarchyIndices;
+            //Mat show = gray.Clone();
+            //show = show.PyrDown();
+
+            //      Cv2.ImShow("raw", show);
+            OpenCvSharp.Point pCenter = new OpenCvSharp.Point(gray.Width / 2, gray.Height / 2);
+            Cv2.FindContours(gray, out contours, out hierarchyIndices, RetrievalModes.External, ContourApproximationModes.ApproxSimple);
+            if (contours.Count() > 0)
+                Math.Abs(Cv2.PointPolygonTest(contours[0], pCenter, true));
+            return 10000000;
+            //double AreaMax = 100000;
+            //int indexMax = 0;
+
+            //for (int j = 0; j < contours.Length; j++)
+            //{
+            //   RotatedRect rot = Cv2.MinAreaRect(contours[j]);
+            //    double dist =Math.Abs( Cv2.PointPolygonTest(contours[j], pCenter,true));
+            //    if (dist <AreaMax)
+            //    {
+            //        AreaMax = dist;
+            //        indexMax = i;
+            //    }
+            //}
+
+
+            // Mat laplacianImage = new Mat();
+            //// Cv2.CvtColor(raw, gray, ColorConversionCodes.BGR2GRAY);
+            // Cv2.Laplacian(raw, laplacianImage, MatType.CV_64F);
+            // Scalar mean, stddev;
+            // Cv2.MeanStdDev(laplacianImage, out mean, out stddev);
+            // return AreaMax;
+        }
+        public async Task ImgBest(int numThread)
         {
             var blurValues = new List<Task<(HImage, double)>>();
             // Khởi tạo Task kiểm tra độ mờ cho từng ảnh
-         for(int i = 0;i < numThread; i++) 
+            for (int i = 0; i < numThread; i++)
             {
-                HImage image = new HImage();
-                image.GrabImage(AcqHandle);
-                blurValues.Add(Task.Run(() => (image, CalculateBlur(image))));
+                HImage img = new HImage();
+                img.GrabImage(AcqHandle);
+                // HOperatorSet.WriteImage(img, "bmp", 0, i.ToString());
+                //  await Task.Delay(2);
+                blurValues.Add(Task.Run(() => (img, CalculateArea(img, 0))));
             }
 
             // Đợi tất cả các Task hoàn tất
@@ -585,19 +646,21 @@ namespace AD_RFID
             var blurResults = blurValues.Select(task => task.Result).ToList();
 
             // So sánh độ mờ giữa các ảnh
-            var mostBlurredImage = blurResults.OrderByDescending(result => result.Item2).First();
+            var mostBlurredImage = blurResults.OrderBy(result => result.Item2).First();
 
-            image= mostBlurredImage.Item1 as HImage;
+            image = mostBlurredImage.Item1 as HImage;
         }
-        static double CalculateBlur(HImage image)
+        static double CalculateBlur(HImage img, int i)
         {
             HTuple Type, w, h;
-            IntPtr intPtr = image.GetImagePointer1(out Type, out w, out h);
+            IntPtr intPtr = img.GetImagePointer1(out Type, out w, out h);
+
             Mat raw = new Mat(Convert.ToInt32(h.ToString()), Convert.ToInt32(w.ToString()), MatType.CV_8UC1, intPtr);
+
             Mat gray = new Mat();
             Mat laplacianImage = new Mat();
-            Cv2.CvtColor(raw, gray, ColorConversionCodes.BGR2GRAY);
-            Cv2.Laplacian(gray, laplacianImage, MatType.CV_64F);
+            // Cv2.CvtColor(raw, gray, ColorConversionCodes.BGR2GRAY);
+            Cv2.Laplacian(raw, laplacianImage, MatType.CV_64F);
             Scalar mean, stddev;
             Cv2.MeanStdDev(laplacianImage, out mean, out stddev);
             return stddev[0] * stddev[0];
@@ -730,17 +793,32 @@ namespace AD_RFID
                 G.Setting.txtUpCameraTime.Text = Convert.ToString(CRecipeCamera.instance.config.iniUpCameraTime);
                 G.Setting.txtUpExposureTime.Text = Convert.ToString(CRecipeCamera.instance.config.iniUpExposureTime);
                 G.Setting.txtUpCameraGain.Text = Convert.ToString(CRecipeCamera.instance.config.iniUpCameraGain);
-                G.Setting.txtDelaySendTime.Text = Convert.ToString(CRecipeCamera.instance.config.iniDelaySendTime);
+             //   G.Setting.txtDelaySendTime.Text = Convert.ToString(CRecipeCamera.instance.config.iniDelaySendTime);
                 double exposureTime = Convert.ToDouble(G.Setting.txtUpExposureTime.Text.ToString());
                 double UpCameraGain = CRecipeCamera.instance.config.iniUpCameraGain;
                 try
                 {
                     HOperatorSet.SetFramegrabberParam(AcqHandle, "ExposureTime", exposureTime);
                     HOperatorSet.SetFramegrabberParam(AcqHandle, "Gain", UpCameraGain);
+                    if (CRecipeCamera.instance.config.hvDwCameraResRow > 10 && CRecipeCamera.instance.config.hvDwCameraResCol > 10)
+                    {
+                        // MessageBox.Show(CRecipeCamera.instance.config.hvDwCameraResCol+","+CRecipeCamera.instance.config.hvDwCameraResRow);
+                        HOperatorSet.SetFramegrabberParam(AcqHandle, "OffsetY", (int)0);
+                        HOperatorSet.SetFramegrabberParam(AcqHandle, "OffsetX", (int)0);
+                        HOperatorSet.SetFramegrabberParam(AcqHandle, "Height", (int)(CRecipeCamera.instance.config.hvDwCameraResRow));
+                        HOperatorSet.SetFramegrabberParam(AcqHandle, "Width", (int)(CRecipeCamera.instance.config.hvDwCameraResCol));
+                        HTuple MaxWidth = 0, MaxHeight = 0;
+                        HOperatorSet.GetFramegrabberParam(AcqHandle, "WidthMax", out MaxWidth);
+                        HOperatorSet.GetFramegrabberParam(AcqHandle, "HeightMax", out MaxHeight);
+                        HOperatorSet.SetFramegrabberParam(AcqHandle, "OffsetY", (int)((MaxHeight.I - CRecipeCamera.instance.config.hvDwCameraResRow) / 2));
+                        HOperatorSet.SetFramegrabberParam(AcqHandle, "OffsetX", (int)((MaxWidth.I - CRecipeCamera.instance.config.hvDwCameraResCol) / 2));
+                    }//horizontalResolution, int verticalResolution
+
+
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    MessageBox.Show("ERROR:UpCamera set ExposureTime fail!");
+                    MessageBox.Show(ex.Message);
                 }
                 if (!bUnEnbleDownCamera)
                 {
@@ -762,6 +840,7 @@ namespace AD_RFID
                     HOperatorSet.ReadImage(out ho_ModelImage, modelImagePath);
                     HOperatorSet.GetImageSize(ho_ModelImage, out hv_imageWidth, out hv_imageHeight);
                     HOperatorSet.SetPart(hv_WindowID, 0, 0, hv_imageHeight - 1, hv_imageWidth - 1);
+                    //   view.Location = new Point(pView.Width / 2 - hv_imageWidth / 2, pView.Height / 2 - hv_imageHeight / 2);
                     HOperatorSet.ReadRegion(out ho_MarkModelRegion, ModelRegionPath);
                     HOperatorSet.ReadShapeModel(ModelPath, out hv_MarkModelID);
                     ho_MarkTemplateImage.Dispose();
@@ -890,13 +969,163 @@ namespace AD_RFID
             MessageBox.Show("please select project file !");
             return false;
         }
+
+        public void UpdateEr(String message)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new UpdateUIHandler(UpdateUI), message);
+            }
+            else
+            {
+                MessageBox.Show(message);
+
+            }
+        }
         public void GrapeImageDelay()
         {
 
-            Thread.Sleep(iUpCameraDelayGrabTime);
+
             try
             {
-                image.GrabImage(AcqHandle);
+                if (bSimulation)
+                {
+                    try
+                    {
+                        Thread.Sleep(iUpCameraDelayGrabTime);
+                        //  //txtDealWithTime.Text = "-0";
+                        listImgs = new List<HImage>();
+                        //HOperatorSet.SetFramegrabberParam(AcqHandle, "BurstFrameCount", 3);
+                        //HObject image1, image2, image3, image4;
+                        //HOperatorSet.GrabImageAsync(out image1, AcqHandle, -1);
+                        //HOperatorSet.GrabImageAsync(out image2, AcqHandle, -1);
+                        //HOperatorSet.GrabImageAsync(out image3, AcqHandle, -1);
+
+
+
+                        // listImgs.Add((HImage)image4);
+                        //HImage img = new HImage();
+                        //img.GrabImageAsync(AcqHandle);
+                        //
+
+                        //// double minDist = 1000000;
+                        //for (int i = 0; i < G.Setting.numTime.Value; i++)
+                        //{ HImage img = new HImage();
+                        //    img.GrabImage(AcqHandle);
+                        //    listImgs.Add((HImage)img);
+                        //}
+                        //for (int i = 0; i < G.Setting.numTime.Value; i++)
+                        //{
+                        //    if (i == 0)
+                        //        image = listImgs[i].Clone();
+                        //    HTuple Type, w, h;
+                        //    IntPtr intPtr = listImgs[i].GetImagePointer1(out Type, out w, out h);
+
+                        //    Mat raw = new Mat(Convert.ToInt32(h.ToString()), Convert.ToInt32(w.ToString()), MatType.CV_8UC1, intPtr);
+                        //    Mat gray = new Mat();
+                        //    Cv2.Threshold(raw.Clone(), gray, CRecipeCamera.instance.config.iniThresholdValue, 255, ThresholdTypes.Binary);
+                        //    gray = gray.PyrDown();
+                        //    gray = gray.PyrDown();
+                        //    OpenCvSharp.Size sz = gray.Size();
+                        //    Mat matOutline = new Mat(sz.Height, sz.Width, MatType.CV_8UC1, Scalar.Black);
+                        //    Cv2.Line(matOutline, new OpenCvSharp.Point(0, 0), new OpenCvSharp.Point(0, sz.Height), Scalar.White);
+                        //    Cv2.Line(matOutline, new OpenCvSharp.Point(sz.Width, 0), new OpenCvSharp.Point(sz.Width, sz.Height), Scalar.White);
+                        //    Mat xor = new Mat();
+                        //    Cv2.BitwiseOr(gray, matOutline, xor);
+                        //    Rect rect2 = new Rect(2, 0, sz.Width - 4, sz.Height);
+                        //    Cv2.Rectangle(xor, rect2, Scalar.Black, -1);
+                        //    Cv2.ImWrite("Xor" + i.ToString() + ".png", xor);
+                        //    double pixelWhite = Cv2.CountNonZero(xor);
+                        //    if (pixelWhite == 2 * sz.Height)
+                        //    {
+                        //        int widthRect = 4;
+                        //        Rect rect = new Rect(sz.Width / 2 - sz.Width / (widthRect * 2), sz.Height / 2 - sz.Height / (widthRect * 2), sz.Width / (widthRect), sz.Height / (widthRect));
+                        //        Mat Roi = new Mat(gray.Clone(), rect); ;
+
+                        //        Mat Crop = new Mat();
+                        //        // Copy the data into new matrix
+                        //        Roi.CopyTo(Crop);
+
+                        //        double pixelNoZero = Cv2.CountNonZero(Crop);
+                        //        if ((pixelNoZero * 1.0) / (Crop.Width * Crop.Height) > 0.4)
+                        //        {
+                        //            Cv2.ImWrite("Rs_" + i.ToString() + ".png", gray);
+                        //            image = listImgs[i];
+                        //            break;
+                        //        }
+                        //    }
+                        //    //Cv2.ImWrite(i.ToString() + ".png", xor);
+                        //    Cv2.ImWrite(i.ToString() + ".png", gray);
+                        //    ////gray = gray.PyrDown();
+                        //    //OpenCvSharp.Point[][] contours;
+                        //    //HierarchyIndex[] hierarchyIndices;
+                        //    ////Mat show = gray.Clone();
+                        //    ////show = show.PyrDown();
+
+                        //    ////      Cv2.ImShow("raw", show);
+
+                        //    //OpenCvSharp.Point pCenter = new OpenCvSharp.Point(raw.Width / 2, raw.Height / 2);
+                        //    //Cv2.FindContours(gray, out contours, out hierarchyIndices, RetrievalModes.External, ContourApproximationModes.ApproxSimple);
+                        //    //if (contours.Count() > 0)
+                        //    //{
+                        //    // double dist=   Math.Abs(Cv2.PointPolygonTest(contours[0], pCenter, true));
+                        //    //    if (dist < minDist)
+                        //    //    {
+                        //    //        minDist = dist;
+                        //    //        image=img.Clone();
+                        //    //    }
+
+                        //    //}
+
+                        //    //  listImgs.Add(img.Clone());
+
+
+                        //}
+                        //txtDealWithTime.Text = "00";
+                        //List<(HImage, double)> list = new List<(HImage, double)>();
+                        //for (int i = 0; i < 5; i++)
+                        //{
+                        //    list.Add((listImgs[i], CalculateBlur(listImgs[i],i)));
+                        //}
+                        //txtDealWithTime.Text = "01";
+                        //var mostBlurredImage = list.OrderByDescending(result => result.Item2).First();
+                        //txtDealWithTime.Text = "02";
+                        //image = mostBlurredImage.Item1 as HImage;
+                        //txtDealWithTime.Text = "04";
+                        //double Best= list.OrderByDescending(a => a).First();
+                        //    var blurValues = new List<Task<(HImage, double)>>();
+                        //// Khởi tạo Task kiểm tra độ mờ cho từng ảnh
+                        //for (int i = 0; i < numThread; i++)
+                        //{
+
+                        //    blurValues.Add(Task.Run(() => (listImgs[i], CalculateBlur(listImgs[i]))));
+                        //}
+
+                        //// Đợi tất cả các Task hoàn tất
+                        //Task.WhenAll(blurValues).Wait();
+
+                        //// Lấy kết quả độ mờ của từng ảnh
+                        //var blurResults = blurValues.Select(task => task.Result).ToList();
+
+                        //// So sánh độ mờ giữa các ảnh
+                        //var mostBlurredImage = blurResults.OrderByDescending(result => result.Item2).First();
+
+                        //image = mostBlurredImage.Item1 as HImage;
+
+
+                        //await ImgBest((int)G.Setting.numTime.Value);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message);
+                    }
+                }
+                else
+                {
+                    Thread.Sleep(iUpCameraDelayGrabTime);
+                    image.GrabImage(AcqHandle);
+                }
+
                 image.GetImageSize(out hv_imageWidth, out hv_imageHeight);
                 hwindowctl.HalconWindow.SetPart(0, 0, hv_imageHeight - 1, hv_imageWidth - 1);
                 hwindowctl.HalconWindow.DispObj(image);
@@ -949,6 +1178,11 @@ namespace AD_RFID
         }
         private void LoadParameter()
         {
+
+            if (File.Exists("Default.config"))
+                G.Config = Access.LoadConfig("Default.config");
+            else G.Config = new Config();
+              Connect_SQL();
             CRecipeCamera.instance.LoadConfig("SystemConfig.xml");
             G.Setting.txtDownCameraTime.Text = Convert.ToString(CRecipeCamera.instance.config.iniDownCameraTime);
             G.Setting.txtDownExposureTime.Text = Convert.ToString(CRecipeCamera.instance.config.iniDownExposureTime);
@@ -965,19 +1199,41 @@ namespace AD_RFID
             G.Setting.txtThresholdValue.Text = Convert.ToString(CRecipeCamera.instance.config.iniThresholdValue);
             G.Setting.txtScale.Text = Convert.ToString(CRecipeCamera.instance.config.iniScale);
             nSaveNGimageDay = Convert.ToInt32(G.Setting.cmbSaveNgDay.SelectedItem);
+            if (G.Config != null)
+                if (G.Config.IsDetail != null)
+                    chkShowEable.IsCLick = G.Config.IsDetail;// CRecipeCamera.instance.config.IsShowDetail;
             string strFileName2 = txtProjectNo.Text + "CameraConfig.xml";
             CRecipeCamera.instance.LoadConfig(strFileName2);
             G.Setting.txtUpCameraTime.Text = Convert.ToString(CRecipeCamera.instance.config.iniUpCameraTime);
-            G.Setting.txtUpExposureTime.Text = Convert.ToString(CRecipeCamera.instance.config.iniUpExposureTime);
-            G.Setting.txtUpCameraGain.Text = Convert.ToString(CRecipeCamera.instance.config.iniUpCameraGain);
-            G.Setting.txtDelaySendTime.Text = Convert.ToString(CRecipeCamera.instance.config.iniDelaySendTime);
+            G.Setting.txtUpExposureTime.Value =CRecipeCamera.instance.config.iniUpExposureTime;
+            G.Setting.txtUpCameraGain.Value =(int) CRecipeCamera.instance.config.iniUpCameraGain;
+            G.Setting.trackWidth.Value = (int)CRecipeCamera.instance.config.hvUpCameraResCol;
+            G.Setting.trackHeight.Value = (int)CRecipeCamera.instance.config.hvUpCameraResRow;
+            G.Setting.trackOffSetX.Value = (int)CRecipeCamera.instance.config.hvUpROI_COL1;
+            G.Setting.trackOffSetY.Value = (int)CRecipeCamera.instance.config.hvUpROI_ROW1;
+            //   G.Setting.txtDelaySendTime.Text = Convert.ToString(CRecipeCamera.instance.config.iniDelaySendTime);
+            try
+            {
+                DataTable dt = G.Server.Table("PO", "PO", "", G.cnnPO, " ORDER BY Date DESC");
+                if (dt.Rows.Count > 0)
+                {
+                    var poList = dt.AsEnumerable().Select(row => row["PO"]).ToList();
+                    txtPO.DataSource = poList;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Ghi lại ngoại lệ để dễ kiểm tra
+                Console.WriteLine(ex.Message);
+            }
+
         }
         private void FormMain_Load(object sender, EventArgs e)
         {
             m_dev = DASK.Register_Card(6, 0);
             if (m_dev < 0)
             {
-             //   MessageBox.Show("Register_IO_Card error!");
+                //   MessageBox.Show("Register_IO_Card error!");
                 lbPCI.Text = "Card PCI Disconnected";
             }
             else
@@ -1005,14 +1261,17 @@ namespace AD_RFID
             LoadParameter();
             timer1.Enabled = true;
             btnUp.Enabled = false;
-            btnUp.BackColor= Color.Transparent;
+            btnUp.BackColor = Color.Transparent;
             G.FormMain.bUnEnbleDownCamera = G.Setting.chkboxUnEnbleDownCamera.Checked;
-            G.FormMain.bUnEnbleUpCamera = G.Setting.chkboxUnEnbleUpCamera.Checked; 
-            G.FormMain.bEnbleShow = G.Setting.chkShowEable.Checked;
-           // BlockNGCon();
+            G.FormMain.bUnEnbleUpCamera = G.Setting.chkboxUnEnbleUpCamera.Checked;
+            G.FormMain.bEnbleShow = chkShowEable.IsCLick;
+
+            // BlockNGCon();
         }
         private void FormMain_FormClosed(object sender, FormClosedEventArgs e)
         {
+            G.cnn.Close();
+            G.cnnPO.Close();
             if (threadUpCamera != null)
             {
                 threadUpCamera.Abort();
@@ -1060,7 +1319,7 @@ namespace AD_RFID
         {
             if (UpDown)
             {
-                
+
                 if (image != null && image.IsInitialized())
                 {
                     CreateMarkModel(image, hWindow);
@@ -1072,7 +1331,7 @@ namespace AD_RFID
             }
             else
             {
-                
+
                 if (imageDown == null || !imageDown.IsInitialized())
                 {
                     MessageBox.Show(" Please load/grab image first.");
@@ -1119,6 +1378,8 @@ namespace AD_RFID
                 HOperatorSet.ReduceDomain(ho_ModelImage, ho_MarkModelRegion, out ho_MarkTemplateImage);
                 HOperatorSet.CreateShapeModel(ho_MarkTemplateImage, 5, new HTuple(-30).TupleRad(), new HTuple(60).TupleRad(), new HTuple(0.7).TupleRad(), new HTuple("point_reduction_high").TupleConcat("no_pregeneration"), "use_polarity", new HTuple(10).TupleConcat(16).TupleConcat(23), 3, out hv_MarkModelID);
                 HOperatorSet.FindShapeModel(ho_MarkTemplateImage, hv_MarkModelID, new HTuple(-30).TupleRad(), new HTuple(60).TupleRad(), hvMatchValue, 60, 0.5, "least_squares", new HTuple(5).TupleConcat(1), 0.75, out hv_MarkModelRow, out hv_MarkModelCol, out hv_MarkModelAngle, out hv_MarkScore);//đổi từ 48 sang 60 
+                                                                                                                                                                                                                                                                                                        // HOperatorSet.FindShapeModel(ho_MarkTemplateImage, hv_MarkModelID, new HTuple(-30).TupleRad(), new HTuple(60).TupleRad(), hvMatchValue, 60, 0.5, "least_squares", new HTuple(5).TupleConcat(1), 0.75, out hv_MarkModelRow, out hv_MarkModelCol, out hv_MarkModelAngle, out hv_MarkScore);//đổi từ 48 sang 60 
+
                 ho_MarkModelContours.Dispose();
                 HOperatorSet.GetShapeModelContours(out ho_MarkModelContours, hv_MarkModelID, 1);
                 HOperatorSet.AreaCenter(ho_MarkModelRegion, out hv_MarkModelRegionArea, out hv_MarkRefRow, out hv_MarkRefCol);
@@ -1244,6 +1505,7 @@ namespace AD_RFID
             {
                 HOperatorSet.GetImageSize(ho_ModelImage, out hv_imageWidth, out hv_imageHeight);
                 HOperatorSet.SetPart(hv_WindowID, 0, 0, hv_imageHeight - 1, hv_imageWidth - 1);
+                //     view.Location = new Point(pView.Width / 2 - hv_imageWidth / 2, pView.Height / 2 - hv_imageHeight / 2);
                 HOperatorSet.ReduceDomain(ho_ModelImage, ho_MarkModelRegion, out ho_MarkTemplateImage);
                 HOperatorSet.DispObj(ho_MarkTemplateImage, hv_WindowID);
                 HOperatorSet.FindShapeModel(ho_MarkTemplateImage, hv_MarkModelID, new HTuple(-30).TupleRad(), new HTuple(60).TupleRad(), hvMatchValue, 60, 0.5, "least_squares", new HTuple(5).TupleConcat(1), 0.75, out hv_MarkModelRow, out hv_MarkModelCol, out hv_MarkModelAngle, out hv_MarkScore);//đổi từ 48 sang 60 
@@ -1366,7 +1628,7 @@ namespace AD_RFID
         {
             if (UpDown)
             {
-                
+
                 if (image != null && image.IsInitialized())
                 {
                     SetModelPagePOS(image, hWindow);
@@ -1378,7 +1640,7 @@ namespace AD_RFID
             }
             else
             {
-                
+
                 if (imageDown == null || !imageDown.IsInitialized())
                 {
                     MessageBox.Show("Error set ROI. Please load/grab image first.");
@@ -1420,6 +1682,7 @@ namespace AD_RFID
 
         private void btnLive_Click(object sender, EventArgs e)
         {
+
             if (UpDown)
             {
                 if (!bUpCameraLive && bUpCameraOK)
@@ -1427,9 +1690,17 @@ namespace AD_RFID
                     DASK.DO_WritePort((ushort)m_dev, 0, 128u);
                     bUpCameraLive = true;
                     btnLive.BackColor = Color.Gold;
+                    btnTrig.Enabled = false;
+                    btnFolder.Enabled = false;
+                    btnTrain.Enabled = false;
+                    BtnRun.Enabled = false;
                 }
                 else//note
                 {
+                    BtnRun.Enabled = true;
+                    btnTrain.Enabled = true;
+                    btnFolder.Enabled = true;
+                    btnTrig.Enabled = true;
                     bUpCameraLive = false;
                     DASK.DO_WritePort((ushort)m_dev, 0, 0u);
                     btnLive.BackColor = Color.Transparent;
@@ -1439,12 +1710,18 @@ namespace AD_RFID
             {
                 if (!bDWCameraLive)
                 {
+                    btnTrain.Enabled = false;
+                    btnTrig.Enabled = false;
+                    btnFolder.Enabled = false;
                     History_message(txtboxHistory, "Up Camera Live");
                     bDWCameraLive = true;
                     btnLive.BackColor = Color.Gold;
                 }
                 else
                 {
+                    btnTrain.Enabled = true;
+                    btnTrig.Enabled = true;
+                    bUpCameraLive = false;
                     bDWCameraLive = false;//note
                     btnLive.BackColor = Color.Transparent;
                 }
@@ -1515,6 +1792,7 @@ namespace AD_RFID
                         hwindowctl.HalconWindow.ClearWindow();
                         image.GetImageSize(out hv_imageWidth, out hv_imageHeight);
                         hwindowctl.HalconWindow.SetPart(0, 0, hv_imageHeight - 1, hv_imageWidth - 1);
+                        // view.Location = new Point(pView.Width / 2 - hv_imageWidth / 2, pView.Height / 2 - hv_imageHeight / 2);
                         hwindowctl.HalconWindow.DispObj(image);
                     }
                     else
@@ -1568,6 +1846,7 @@ namespace AD_RFID
                         hwindowctl02.HalconWindow.ClearWindow();
                         imageDown.GetImageSize(out hv_imageWidth, out hv_imageHeight);
                         hwindowctl02.HalconWindow.SetPart(0, 0, hv_imageHeight - 1, hv_imageWidth - 1);
+                        //  view.Location = new Point(pView.Width / 2 - hv_imageWidth / 2, pView.Height / 2 - hv_imageHeight / 2);
                         hwindowctl02.HalconWindow.DispObj(imageDown);
                     }
                 }
@@ -1648,6 +1927,191 @@ namespace AD_RFID
             //else if (CheckDownMark(imageDown, hWindow02))
             //{
             //}
+        }
+        public void Empty(System.IO.DirectoryInfo directory)
+        {
+            foreach (System.IO.FileInfo file in directory.GetFiles()) file.Delete();
+            foreach (System.IO.DirectoryInfo subDirectory in directory.GetDirectories()) subDirectory.Delete(true);
+            directory.Delete();
+        }
+        public void Connect_SQL()
+        {
+
+            try
+            {
+
+                string nameFileSQL = @"Report\" + DateTime.Now.ToString("yyyyMMdd") + ".mdf";
+                if (!File.Exists(nameFileSQL))
+                {
+                    File.Copy(@"Report\Default.mdf", nameFileSQL);
+                    File.Exists(@"Report\Default.mdf");
+                }
+                //Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=D:\ChiTu\Codes\BeeIV2\bin\Release\Report\Default.mdf;Integrated Security=True;Connect Timeout=30
+                String path = Path.Combine(Environment.CurrentDirectory, nameFileSQL);
+                G._pathSqlMaster = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=" + path + ";Integrated Security=True;Connect Timeout=30"; ;
+                G.cnn = new SqlConnection(G._pathSqlMaster);
+                // G.cnn.Close();
+                G.cnn.Open();
+                String pathPO = Path.Combine(Environment.CurrentDirectory, @"Report\PO.mdf");
+                String dbPO = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=" + pathPO + ";Integrated Security=True;Connect Timeout=30"; ;
+                G.cnnPO = new SqlConnection(dbPO);
+                // G.cnn.Close();
+                G.cnnPO.Open();
+
+                string resourceDir = Path.Combine(Environment.CurrentDirectory, "Report");
+                string[] files = Directory.GetFiles(resourceDir, "*.mdf");
+                DateTime dtNow = DateTime.Now;
+                foreach (string path2 in files)
+                {
+                    if (path2.Contains("Default.mdf"))
+                        continue;
+                    if (path2.Contains("PO.mdf"))
+                        continue;
+                    String Date = Path.GetFileNameWithoutExtension(path2);
+                    DateTime date2 = DateTime.ParseExact(Date, "yyyyMMdd", null);
+                    TimeSpan sp = dtNow - date2;
+                    if (sp.TotalDays > G.Config.LimitDateSave)
+                    {
+
+                        File.Delete(path2);
+                        System.IO.DirectoryInfo directory = new System.IO.DirectoryInfo("Report//" + Date);
+                        if (Directory.Exists("Report//" + Date))
+                            Empty(directory);
+
+                    }
+
+                }
+                txtPO.Enabled = true;
+                btnDelete.Enabled = true;
+                btnReport.Enabled = true;
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+        public void SQL_Insert(String PO, String Status, int OK, int NG)
+        {
+            if (PO == "") return;
+          
+            if (G.cnn.State != ConnectionState.Open) return;
+            if (G.cnnPO.State != ConnectionState.Open) return;
+            
+            if (!G.Config.IsSaveOK)
+            {
+                if (Status.Contains("OK"))
+                {
+                    return;
+                }
+            }
+            if (!G.Config.IsSaveNG)
+            {
+                if (Status.Contains("NG"))
+                {
+                    return;
+                }
+            }
+            if (G.cnn.State == ConnectionState.Closed)
+                G.cnn.Open();
+            String pathRaw, pathRS;
+            String date = DateTime.Now.ToString("yyyyMMdd");
+            String Hour = DateTime.Now.ToString("HHmmss");
+            pathRaw = "Report//" + date + "//Raw";
+            pathRS = "Report//" + date + "//Result";
+            if (!Directory.Exists(pathRaw))
+            {
+
+                Directory.CreateDirectory(pathRaw);
+            }
+            if (!Directory.Exists(pathRS))
+            {
+                Directory.CreateDirectory(pathRS);
+            }
+            try
+            {
+                if (txtPO.Text.Trim() != "")
+                {
+
+
+                    SQL_PO();
+                       SqlCommand command = new SqlCommand();
+                 
+                    command.Connection = G.cnn;
+                    command.Prepare();
+                    //command.CommandText = "INSERT into Report (Date,PO,Status,Total,Status,Raw,Result) VALUES(@Date,@Model,@Qty,@Total,@Status,@Raw,@Result)";
+                    command.CommandText = "INSERT into Report (Date,PO,Status,Raw,OK,NG) VALUES(@Date,@PO,@Status,@Raw,@OK,@NG)";
+
+                    command.Parameters.Add("@Date", SqlDbType.DateTime).Value = DateTime.Now;             // 1
+                    command.Parameters.AddWithValue("@PO", PO);                                             // 2                                                                                                      //  command.Parameters.Add("@Time", MySqlDbType.DateTime).Value = DateTime.Now;             // 3
+                                                                                                            // command.Parameters.Add("@Qty", SqlDbType.Int).Value = Qty;                                             // 4
+                                                                                                            //command.Parameters.Add("@Total", SqlDbType.Int).Value = Total;                                        // 5
+                    command.Parameters.AddWithValue("@Status", Status);
+
+                    command.Parameters.AddWithValue("@Raw", pathRaw + "//" + PO + "_" + Hour + ".png");// imageToByteArray(raw);         // 7
+                                                                                                          //command.Parameters.AddWithValue("@Result", pathRS + "//" + Model + "_" + Hour + ".png"); ;   // 7
+                    command.Parameters.AddWithValue("@OK", OK);// 8
+                    command.Parameters.AddWithValue("@NG", NG);// 9
+                    command.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            HTuple type, w, h;
+            IntPtr intPtr = image.GetImagePointer1(out type, out w, out h);
+            Mat matRs = new Mat(Convert.ToInt32(h.ToString()), Convert.ToInt32(w.ToString()), MatType.CV_8UC1, intPtr);
+            switch (G.Config.TypeSave)
+            {
+                case 1:
+                    Cv2.PyrDown(matRs, matRs);
+                    Cv2.PyrDown(matRs, matRs);
+                    //   Cv2.PyrDown(raw, raw);
+                    //   Cv2.PyrDown(raw, raw);
+                    break;
+                case 2:
+                    Cv2.PyrDown(matRs, matRs);
+                    //   Cv2.PyrDown(raw, raw);
+                    break;
+            }
+            if (G.Config.IsSaveRaw)
+                Cv2.ImWrite(pathRaw + "//" + PO + "_" + Hour + ".png", matRs);
+            //if (G.Config.IsSaveRS)
+            //    Cv2.ImWrite(pathRS + "//" + model + "_" + Hour + ".png", matRs);
+
+
+        }
+        public void SQL_PO()
+        {
+            if (!G.Server.Check("*", "PO", "PO='" + txtPO.Text.Trim() + "'", G.cnnPO))
+            {
+                SqlCommand command = new SqlCommand();
+                command.Connection = G.cnnPO;
+                command.CommandText = "INSERT INTO PO (OK, NG,  Total, Miss, NGPosition, DoublePcs, PO,Date) " +
+                                      "VALUES ( @OK, @NG, @Total, @Miss, @NGPosition, @DoublePcs, @PO,@Date)";
+                command.Parameters.AddWithValue("@OK", 0);
+                command.Parameters.AddWithValue("@NG", 0);
+                command.Parameters.AddWithValue("@Total", 0);
+                command.Parameters.AddWithValue("@Miss", 0);
+                command.Parameters.AddWithValue("@NGPosition", 0);
+                command.Parameters.AddWithValue("@DoublePcs", 0);
+                command.Parameters.AddWithValue("@Date", DateTime.Now);
+                command.Parameters.AddWithValue("@PO", txtPO.Text.Trim());
+
+                command.ExecuteNonQuery();
+            }
+            else
+            {
+                SqlCommand command = new SqlCommand();
+                command.Connection = G.cnnPO;
+                command.Prepare();
+                command.CommandText = "UPDATE  PO SET OK='" + PerOK + "' , NG='" + PerNg + "' , Total='" + iAllNum + "' , NGPosition='" + iOffsetPosNum + "',DoublePcs=' " + iDoubleNum + "',PO='" + PO + "'";
+                command.ExecuteNonQuery();
+            }
+         
+
+          
+
         }
 
         public bool FindMark(HImage checkImage, HTuple hv_WindowID)
@@ -1765,6 +2229,7 @@ namespace AD_RFID
             HTuple hvAreaOffset = CRecipeCamera.instance.config.iniAreaOffset;
             HTuple hvMatchValue = Convert.ToDouble(CRecipeCamera.instance.config.iniMatchValue);
             HTuple hvThreshold = CRecipeCamera.instance.config.iniThresholdValue;
+            String Status = "Miss";
             try
             {
                 iAllNum++;
@@ -1840,16 +2305,18 @@ namespace AD_RFID
                 HOperatorSet.SetColor(hv_WindowID, "red");
                 if (hv_Number > hv_Score.Length)
                 {
-                    
+
                     set_display_font(hv_WindowID, 20, "mono", "true", "false");
                     HOperatorSet.SetTposition(hv_WindowID, 50, 50);
                     HOperatorSet.SetColor(hv_WindowID, "red");
-                    HOperatorSet.WriteString(hv_WindowID, "less");//note less
-                    CImage.instance.SaveBMPImage(image, "less");//note less
+                    Status = "Less";
+                    HOperatorSet.WriteString(hv_WindowID, Status);//note less
+                                                                  //  CImage.instance.SaveBMPImage(image, "less");//note less
                     iMissNum++;
                     HOperatorSet.CountSeconds(out hv_End);
                     hvDealTime = hv_End - hv_Start;
                     strDealTime = hvDealTime[0].D.ToString("0.000");
+                    SQL_Insert(txtPO.Text, Status, numOK, numNG);
                     UpdateUI("Less", Color.Red);//note
                     return false;
                 }
@@ -1858,13 +2325,15 @@ namespace AD_RFID
                     set_display_font(hv_WindowID, 20, "mono", "true", "false");
                     HOperatorSet.SetTposition(hv_WindowID, 50, 50);
                     HOperatorSet.SetColor(hv_WindowID, "red");
-                    HOperatorSet.WriteString(hv_WindowID, "more");
-                    CImage.instance.SaveBMPImage(image, "more");
+                    Status = "More";
+                    HOperatorSet.WriteString(hv_WindowID, Status);
+                    //CImage.instance.SaveBMPImage(image, "more");
                     iDoubleNum++;
                     HOperatorSet.CountSeconds(out hv_End);
                     hvDealTime = hv_End - hv_Start;
                     strDealTime = hvDealTime[0].D.ToString("0.000");
                     UpdateUI("More", Color.Orange);//note
+                    SQL_Insert(txtPO.Text, Status, numOK, numNG);
                     return false;
                 }
                 hv_n = 1;
@@ -1903,13 +2372,15 @@ namespace AD_RFID
                         set_display_font(hv_WindowID, 20, "mono", "true", "false");
                         HOperatorSet.SetTposition(hv_WindowID, ChamberRow, ChamberCol);
                         HOperatorSet.SetColor(hv_WindowID, "red");
-                        HOperatorSet.WriteString(hv_WindowID, "NG(Dislocation)");
-                        CImage.instance.SaveBMPImage(image, "dislocation");
+                        Status = "NG(Location)";
+                        HOperatorSet.WriteString(hv_WindowID, Status);
+                        //   CImage.instance.SaveBMPImage(image, "dislocation");
                         UpdateUI("Location", Color.Red);
                         iOffsetPosNum++;
                         HOperatorSet.CountSeconds(out hv_End);
                         hvDealTime = hv_End - hv_Start;
                         strDealTime = hvDealTime[0].D.ToString("0.000");
+                        SQL_Insert(txtPO.Text, Status, numOK, numNG);
                         return false;
                     }
                     if (hvRightOffset < hvOffsetCol || hvOffsetCol < hvLeftOffset)
@@ -1917,13 +2388,15 @@ namespace AD_RFID
                         set_display_font(hv_WindowID, 20, "mono", "true", "false");
                         HOperatorSet.SetTposition(hv_WindowID, ChamberRow, ChamberCol);
                         HOperatorSet.SetColor(hv_WindowID, "red");
-                        HOperatorSet.WriteString(hv_WindowID, "NG(Dislocation)");
-                        CImage.instance.SaveBMPImage(image, "dislocation");
-                        UpdateUI("NG", Color.Red);
+                        Status = "NG(Location)";
+                        HOperatorSet.WriteString(hv_WindowID, Status);
+                        // CImage.instance.SaveBMPImage(image, "dislocation");
+                        UpdateUI("Location", Color.Red);
                         iOffsetPosNum++;
                         HOperatorSet.CountSeconds(out hv_End);
                         hvDealTime = hv_End - hv_Start;
                         strDealTime = hvDealTime[0].D.ToString("0.000");
+                        SQL_Insert(txtPO.Text, Status, numOK, numNG);
                         return false;
                     }
                     if (hvAngleOffset1 < hvOffsetAngle || hvOffsetAngle < hvAngleOffset2)
@@ -1931,13 +2404,15 @@ namespace AD_RFID
                         set_display_font(hv_WindowID, 20, "mono", "true", "false");
                         HOperatorSet.SetTposition(hv_WindowID, ChamberRow, ChamberCol);
                         HOperatorSet.SetColor(hv_WindowID, "red");
-                        HOperatorSet.WriteString(hv_WindowID, "NG(AngleDislocation)");
-                        CImage.instance.SaveBMPImage(image, "dislocation");
+                        Status = "NG( Angle)";
+                        HOperatorSet.WriteString(hv_WindowID, Status);
+                        //   CImage.instance.SaveBMPImage(image, "dislocation");
                         UpdateUI("Location", Color.Red);
                         iOffsetPosNum++;
                         HOperatorSet.CountSeconds(out hv_End);
                         hvDealTime = hv_End - hv_Start;
                         strDealTime = hvDealTime[0].D.ToString("0.000");
+                        SQL_Insert(txtPO.Text, Status, numOK, numNG);
                         return false;
                     }
                     hv_n = hv_n.TupleAdd(step_val198);
@@ -1949,7 +2424,9 @@ namespace AD_RFID
                 HOperatorSet.CountSeconds(out hv_End);
                 hvDealTime = hv_End - hv_Start;
                 strDealTime = hvDealTime[0].D.ToString("0.000");
-                 UpdateUI("OK", Color.Green);//note
+                UpdateUI("OK", Color.Green);//note
+                Status = "OK";
+                SQL_Insert(txtPO.Text, Status, numOK, numNG);
                 return true;
             }
             catch (Exception)
@@ -1958,7 +2435,8 @@ namespace AD_RFID
                 HOperatorSet.SetTposition(hv_WindowID, 50, 50);
                 HOperatorSet.SetColor(hv_WindowID, "red");
                 HOperatorSet.WriteString(hv_WindowID, "miss");
-                CImage.instance.SaveBMPImage(image, "miss");
+                SQL_Insert(txtPO.Text, Status, numOK, numNG);
+                //     CImage.instance.SaveBMPImage(image, "miss");
                 iMissNum++;
                 UpdateUI("Error", Color.Red);//note
                 return false;
@@ -2057,6 +2535,7 @@ namespace AD_RFID
                 imageDown.GrabImage(AcqHandleDown);
                 imageDown.GetImageSize(out hv_imageWidth, out hv_imageHeight);
                 hwindowctl02.HalconWindow.SetPart(0, 0, hv_imageHeight - 1, hv_imageWidth - 1);
+                //  view.Location = new Point(pView.Width / 2 - hv_imageWidth / 2, pView.Height / 2 - hv_imageHeight / 2);
                 hwindowctl02.HalconWindow.DispObj(imageDown);
                 CImage.instance.imageDW = imageDown;
             }
@@ -2127,6 +2606,7 @@ namespace AD_RFID
                     hwindowctl04.HalconWindow.ClearWindow();
                     image.GetImageSize(out hv_imageWidth, out hv_imageHeight);
                     hwindowctl01.HalconWindow.SetPart(0, 0, hv_imageHeight - 1, hv_imageWidth - 1);
+                    // view.Location = new Point(pView.Width / 2 - hv_imageWidth / 2, pView.Height / 2 - hv_imageHeight / 2);
                     hwindowctl01.HalconWindow.DispObj(image);
                     HOperatorSet.DispObj(ho_Rect, hWindow01);
                     HOperatorSet.DispObj(ho_Rect01, hWindow01);
@@ -2149,6 +2629,7 @@ namespace AD_RFID
                     set_display_font(hWindow02, 16, "mono", "true", "false");
                     image.GetImageSize(out hv_imageWidth, out hv_imageHeight);
                     hwindowctl02.HalconWindow.SetPart(0, 0, hv_imageHeight - 1, hv_imageWidth - 1);
+                    //   view.Location = new Point(pView.Width / 2 - hv_imageWidth / 2, pView.Height / 2 - hv_imageHeight / 2);
                     hwindowctl02.HalconWindow.DispObj(image);
                     HOperatorSet.DispObj(ho_Rect, hWindow02);
                     HOperatorSet.DispObj(ho_Rect01, hWindow02);
@@ -2171,6 +2652,7 @@ namespace AD_RFID
                     set_display_font(hWindow03, 16, "mono", "true", "false");
                     image.GetImageSize(out hv_imageWidth, out hv_imageHeight);
                     hwindowctl03.HalconWindow.SetPart(0, 0, hv_imageHeight - 1, hv_imageWidth - 1);
+                    //  view.Location = new Point(pView.Width / 2 - hv_imageWidth / 2, pView.Height / 2 - hv_imageHeight / 2);
                     hwindowctl03.HalconWindow.DispObj(image);
                     HOperatorSet.DispObj(ho_Rect, hWindow03);
                     HOperatorSet.DispObj(ho_Rect01, hWindow03);
@@ -2193,6 +2675,7 @@ namespace AD_RFID
                     set_display_font(hWindow04, 16, "mono", "true", "false");
                     image.GetImageSize(out hv_imageWidth, out hv_imageHeight);
                     hwindowctl04.HalconWindow.SetPart(0, 0, hv_imageHeight - 1, hv_imageWidth - 1);
+                    // view.Location = new Point(pView.Width / 2 - hv_imageWidth / 2, pView.Height / 2 - hv_imageHeight / 2);
                     hwindowctl04.HalconWindow.DispObj(image);
                     HOperatorSet.DispObj(ho_Rect, hWindow04);
                     HOperatorSet.DispObj(ho_Rect01, hWindow04);
@@ -2366,11 +2849,10 @@ namespace AD_RFID
                 return false;
             }
         }
-
+        bool bGrabStart = false;
         private void ThreadUpCameraRun()
         {
             bool bCheckResult = false;
-            bool bGrabStart = false;
             int iSensorOn = 0;
             bMarkCheckStart = false;
             bUpCameraCheckNG = false;
@@ -2378,7 +2860,9 @@ namespace AD_RFID
             {
                 if (bIOCarkOK)
                 {
-                    short ret = DASK.DI_ReadPort((ushort)m_dev, 0, out var int_value);
+                    short ret;
+
+                    ret = DASK.DI_ReadPort((ushort)m_dev, 0, out var int_value);
                     if (ret < 0)
                     {
                         break;
@@ -2393,34 +2877,1128 @@ namespace AD_RFID
                         bGrabStart = true;
                         iSensorOn = 0;
                     }
+
                     if (bGrabStart)
                     {
                         bMarkCheckStart = true;
                         bGrabStart = false;
+
                         ret = DASK.DO_WritePort((ushort)m_dev, 0, 0u);
                         if (!bUnEnbleUpCamera)
                         {
+
                             ret = DASK.DO_WritePort((ushort)m_dev, 0, 128u);
                             if (ret < 0)
                             {
                                 break;
                             }
+
                             GrapeImageDelay();
+
+
                             ret = DASK.DO_WritePort((ushort)m_dev, 0, 0u);
-                            if (!FindMark(image, hWindow))
+
+                            if (bTrain)
                             {
-                                bUpCameraCheckNG = true;
-                                ret = DASK.DO_WritePort((ushort)m_dev, 0, 256u);
+                                bExit = true;
+                                bTrainDetected = true;
+                                upCameraAutoThread.Abort();
+
                             }
+                            else
+                            {
+
+                                if (!FindMark(image, hWindow))
+                                {
+                                    bUpCameraCheckNG = true;
+                                    ret = DASK.DO_WritePort((ushort)m_dev, 0, 256u);
+                                }
+                            }
+
                         }
                     }
                 }
                 Thread.Sleep(10);
             }
         }
-        private void BtnRun_Click(object sender, EventArgs e)
+
+        float yPage1, xPage1, yPage2, xPage2, anglePage1, anglePage2;
+        float lenght1 = 180, lenght2 = 20;
+        public bool SetPosionPage(HImage ho_ModelImage, HTuple hv_WindowID)
+        {
+            HTuple hTuple = null;
+            HTuple hTuple2 = null;
+            HTuple hTuple3 = null;
+            HTuple hTuple4 = null;
+            HTuple row = yPage1;
+            HTuple column = xPage1;
+            HTuple phi = 0;
+            HTuple length = lenght1;
+            HTuple length2 = lenght2;
+            HTuple hTuple5 = null;
+            HTuple hTuple6 = new HTuple();
+            HTuple measureHandle = new HTuple();
+            HTuple rowEdge = new HTuple();
+            HTuple columnEdge = new HTuple();
+            HTuple amplitude = new HTuple();
+            HTuple distance = new HTuple();
+            HTuple rowBegin = null;
+            HTuple colBegin = null;
+            HTuple rowEnd = null;
+            HTuple colEnd = null;
+            HTuple nr = null;
+            HTuple nc = null;
+            HTuple dist = null;
+            HTuple hTuple7 = null;
+            HTuple hTuple8 = null;
+            HTuple row2 = yPage2;
+            HTuple column2 = xPage2;
+            HTuple phi2 = 0;
+            HTuple length3 = lenght1;
+            HTuple length4 = lenght2;
+            HTuple hTuple9 = new HTuple();
+            HTuple measureHandle2 = new HTuple();
+            HTuple rowEdge2 = new HTuple();
+            HTuple columnEdge2 = new HTuple();
+            HTuple amplitude2 = new HTuple();
+            HTuple distance2 = new HTuple();
+            HTuple rowBegin2 = null;
+            HTuple colBegin2 = null;
+            HTuple rowEnd2 = null;
+            HTuple colEnd2 = null;
+            HTuple angle = null;
+            HTuple row3 = null;
+            HTuple column3 = null;
+            HTuple angle2 = null;
+            HTuple isParallel = null;
+            HTuple hTuple10 = new HTuple();
+            HTuple hTuple11 = new HTuple();
+            HTuple hTuple12 = new HTuple();
+            HTuple hTuple13 = new HTuple();
+            HTuple hTuple14 = new HTuple();
+            HTuple hTuple15 = new HTuple();
+            HTuple hTuple16 = new HTuple();
+            HTuple hTuple17 = new HTuple();
+            HTuple hTuple18 = new HTuple();
+            HTuple hTuple19 = new HTuple();
+            HTuple hTuple20 = new HTuple();
+            HOperatorSet.GenEmptyObj(out var emptyObject);
+            HOperatorSet.GenEmptyObj(out var emptyObject2);
+            HOperatorSet.GenEmptyObj(out var emptyObject3);
+            HOperatorSet.GenEmptyObj(out var emptyObject4);
+            HOperatorSet.GenEmptyObj(out var _);
+            try
+            {
+                HOperatorSet.GetImageSize(ho_ModelImage, out hTuple, out hTuple2);
+                hTuple3 = new HTuple();
+                hTuple4 = new HTuple();
+
+                tmMouseRightDown.Enabled = true;
+                HOperatorSet.DrawRectangle2Mod(hv_WindowID, yPage1, xPage1, new HTuple(90).TupleRad(), 180, 20, out row, out column, out phi, out length, out length2);
+                //row = yPage1;
+                //column = xPage1;
+                //phi = 0;
+                //length = lenght2;
+                //length2 = lenght1;
+                emptyObject.Dispose();
+                HOperatorSet.GenRectangle2(out emptyObject, row, column, phi, length, length2);
+
+                HOperatorSet.SetColor(hv_WindowID, "green");
+                HOperatorSet.DispObj(emptyObject, hv_WindowID);
+                hTuple5 = 0;
+                while ((int)hTuple5 <= 20)
+                {
+                    hTuple6 = column + hTuple5 * 50;
+                    emptyObject.Dispose();
+                    HOperatorSet.GenRectangle2(out emptyObject, row, hTuple6, phi, length, length2);
+                    HOperatorSet.GenMeasureRectangle2(row, hTuple6, phi, length, length2, hTuple, hTuple2, "nearest_neighbor", out measureHandle);
+                    HOperatorSet.MeasurePos(ho_ModelImage, measureHandle, 1, 40, "positive", "first", out rowEdge, out columnEdge, out amplitude, out distance);
+                    hTuple3 = hTuple3.TupleConcat(rowEdge);
+                    hTuple4 = hTuple4.TupleConcat(columnEdge);
+                    HOperatorSet.SetColor(hv_WindowID, "red");
+                    HOperatorSet.DispCross(hv_WindowID, rowEdge, columnEdge, 20, 45);
+                    HOperatorSet.CloseMeasure(measureHandle);
+                    hTuple5 = (int)hTuple5 + 1;
+                }
+
+
+
+
+                emptyObject2.Dispose();
+                HOperatorSet.GenContourPolygonXld(out emptyObject2, hTuple3, hTuple4);
+                HOperatorSet.FitLineContourXld(emptyObject2, "tukey", -1, 0, 5, 1.345, out rowBegin, out colBegin, out rowEnd, out colEnd, out nr, out nc, out dist);
+                HOperatorSet.SetColor(hv_WindowID, "green");
+                HOperatorSet.DispLine(hv_WindowID, rowBegin, colBegin, rowEnd, colEnd);
+                hTuple7 = new HTuple();
+                hTuple8 = new HTuple();
+
+                tmMouseRightDown.Enabled = true;
+                HOperatorSet.DrawRectangle2Mod(hv_WindowID, yPage2, xPage2, new HTuple(180).TupleRad(), 180, 20, out row2, out column2, out phi2, out length3, out length4);
+                emptyObject3.Dispose();
+                HOperatorSet.GenRectangle2(out emptyObject3, row2, column2, phi2, length3, length4);
+                HOperatorSet.SetColor(hv_WindowID, "green");
+                HOperatorSet.DispObj(emptyObject3, hv_WindowID);
+                hTuple5 = 0;
+                while ((int)hTuple5 <= 20)
+                {
+                    hTuple9 = row2 + hTuple5 * 30;
+                    emptyObject3.Dispose();
+                    HOperatorSet.GenRectangle2(out emptyObject3, hTuple9, column2, phi2, length3, length4);
+                    HOperatorSet.GenMeasureRectangle2(hTuple9, column2, phi2, length3, length4, hTuple, hTuple2, "nearest_neighbor", out measureHandle2);
+                    HOperatorSet.MeasurePos(ho_ModelImage, measureHandle2, 1, 40, "positive", "first", out rowEdge2, out columnEdge2, out amplitude2, out distance2);
+                    hTuple7 = hTuple7.TupleConcat(rowEdge2);
+                    hTuple8 = hTuple8.TupleConcat(columnEdge2);
+                    HOperatorSet.SetColor(hv_WindowID, "red");
+                    HOperatorSet.DispCross(hv_WindowID, rowEdge2, columnEdge2, 20, 45);
+                    hTuple5 = (int)hTuple5 + 1;
+                }
+                HOperatorSet.CloseMeasure(measureHandle2);
+                emptyObject4.Dispose();
+                HOperatorSet.GenContourPolygonXld(out emptyObject4, hTuple7, hTuple8);
+                HOperatorSet.FitLineContourXld(emptyObject4, "tukey", -1, 0, 5, 1.345, out rowBegin2, out colBegin2, out rowEnd2, out colEnd2, out nr, out nc, out dist);
+                HOperatorSet.SetColor(hv_WindowID, "green");
+                HOperatorSet.DispLine(hv_WindowID, rowBegin2, colBegin2, rowEnd2, colEnd2);
+                HOperatorSet.AngleLx(rowBegin2, colBegin2, rowEnd2, colEnd2, out angle);
+                HOperatorSet.AngleLx(rowBegin, colBegin, rowEnd, colEnd, out angle2);
+                HOperatorSet.IntersectionLl(rowBegin, colBegin, rowEnd, colEnd, rowBegin2, colBegin2, rowEnd2, colEnd2, out row3, out column3, out isParallel);
+                HOperatorSet.SetColor(hv_WindowID, "red");
+                HOperatorSet.DispCross(hv_WindowID, row3, column3, 30, 0);
+                HOperatorSet.SetTposition(hv_WindowID, 20, 20);
+                HTuple stringVal = "Model Position：" + row3 + " ;" + column3 + " ;" + angle2;
+                HOperatorSet.WriteString(hv_WindowID, stringVal);
+                CRecipeCamera.instance.LoadConfig("SystemConfig.xml");
+                CRecipeCamera.instance.config.iniDownRow = row;//yPage1, xPage1
+                CRecipeCamera.instance.config.iniDownCol = column;
+                CRecipeCamera.instance.config.iniDownPhi = phi;
+                CRecipeCamera.instance.config.iniDownLength11 = length;
+                CRecipeCamera.instance.config.iniDownLength21 = length2;
+                CRecipeCamera.instance.config.iniLeftRow = row2;
+                CRecipeCamera.instance.config.iniLeftCol = column2;
+                CRecipeCamera.instance.config.iniLeftPhi = phi2;
+                CRecipeCamera.instance.config.iniLeftLength11 = length3;
+                CRecipeCamera.instance.config.iniLeftLength21 = length4;
+                CRecipeCamera.instance.SaveConfig("SystemConfig.xml");
+                // MessageBox.Show("Set Page Position finish ！");
+                // MessageBox.Show("Set Page Position finish ！");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                CLogAssistant.instance.log_message("Read Model Fail!", ELogLevel.Error);
+                btnTrain.Enabled = true;
+                // MessageBox.Show("Set Page Position fail！");
+                return false;
+            }
+        }
+        [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
+        public static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint cButtons, uint dwExtraInfo);
+
+        // Các sự kiện chuột
+        private const int MOUSEEVENTF_RIGHTDOWN = 0x0008;
+        private const int MOUSEEVENTF_RIGHTUP = 0x0010;
+        InputSimulator inputSimulator = new InputSimulator();
+
+        public void RightClick()
+        {
+            // Di chuyển chuột đến tọa độ (x, y)
+            AutoItX.MouseMove((int)(view.Width / 2), (int)view.Height / 2, 10); // Tham số 10 là tốc độ di chuyển
+                                                                                // await Task.Delay(1000);
+                                                                                // Giả lập click chuột trái
+            AutoItX.MouseClick("RIGHT");
+            AutoItX.MouseClick("RIGHT");
+            // await Task.Delay(100);
+            //Cursor.Position = new Point((int)(view.Width / 2), (int)view.Height / 2);
+            //// Di chuyển chuột
+            ////inputSimulator.Mouse.MoveMouseTo((uint)(view.Width / 2), (uint)view.Height / 2);
+
+
+
+            //// Giả lập click chuột trái
+            //inputSimulator.Mouse.RightButtonDown();
+            //await Task.Delay(1000);
+            //inputSimulator.Mouse.RightButtonUp();
+            //  await Timer(100);
+            //  var args = new MouseEventArgs(MouseButtons.Right, 1, view.Width / 2, view.Height / 2, 0);
+            // Lấy vị trí hiện tại của chuột và gửi sự kiện nhấp chuột phải
+            // MoveMouseTo(this.Width/2, this.Height/2);
+            // mouse_event(MOUSEEVENTF_RIGHTDOWN | MOUSEEVENTF_RIGHTUP,  (uint)(this.Width / 2), (uint)this.Height / 2, 0, 0);
+        }
+        public void MoveMouseTo(int x, int y)
+        {
+            Cursor.Position = new Point(x, y); // Di chuyển chuột đến tọa độ (x, y)
+        }
+        public bool CreateModelauto(HImage ho_ModelImage, HTuple hv_WindowID)
+        {
+            HObject[] OTemp = new HObject[20];
+            HTuple hv_Width = null;
+            HTuple hv_Height = null;
+            HTuple hv_MarkRow = null;
+            HTuple hv_MarkCol = null;
+            HTuple hv_MarkPhi = null;
+            HTuple hv_MarkLength11 = null;
+            HTuple hv_MarkLength21 = null;
+            HTuple hv_MarkModelID = null;
+            HTuple hv_MarkModelRow = null;
+            HTuple hv_MarkModelCol = null;
+            HTuple hv_MarkModelAngle = null;
+            HTuple hv_MarkScore = null;
+            HTuple hv_MarkModelRegionArea = null;
+            HTuple hv_MarkRefRow = null;
+            HTuple hv_MarkRefCol = null;
+            HTuple hv_MarkHomMat2D = null;
+            HOperatorSet.GenEmptyObj(out var ho_MarkModelRegion);
+            HOperatorSet.GenEmptyObj(out var ho_MarkTemplateImage);
+            HOperatorSet.GenEmptyObj(out var ho_MarkModelContours);
+            HOperatorSet.GenEmptyObj(out var ho_MarkTransContours);
+            CRecipeCamera.instance.LoadConfig("SystemConfig.xml");
+            HTuple hvMatchValue = Convert.ToDouble(CRecipeCamera.instance.config.iniMatchValue);
+            try
+            {
+                HOperatorSet.DispObj(ho_ModelImage, hv_WindowID);
+                HOperatorSet.GetImageSize(ho_ModelImage, out hv_Width, out hv_Height);
+
+                // tmMouseRightDown.Enabled = true;
+                HOperatorSet.DrawRectangle2Mod(hv_WindowID, rotatedModel.Center.Y, rotatedModel.Center.X, new HTuple(90 - rotatedModel.Angle).TupleRad(), rotatedModel.Size.Height / 2, rotatedModel.Size.Width / 2, out hv_MarkRow, out hv_MarkCol, out hv_MarkPhi, out hv_MarkLength11, out hv_MarkLength21);
+                ho_MarkModelRegion.Dispose();
+                HOperatorSet.GenRectangle2(out ho_MarkModelRegion, hv_MarkRow, hv_MarkCol, hv_MarkPhi, hv_MarkLength11, hv_MarkLength21);
+                ho_MarkTemplateImage.Dispose();
+                HOperatorSet.ReduceDomain(ho_ModelImage, ho_MarkModelRegion, out ho_MarkTemplateImage);
+                HOperatorSet.CreateShapeModel(ho_MarkTemplateImage, 5, new HTuple(-30).TupleRad(), new HTuple(60).TupleRad(), new HTuple(0.7).TupleRad(), new HTuple("point_reduction_high").TupleConcat("no_pregeneration"), "use_polarity", new HTuple(10).TupleConcat(16).TupleConcat(23), 3, out hv_MarkModelID);
+                HOperatorSet.FindShapeModel(ho_MarkTemplateImage, hv_MarkModelID, new HTuple(-30).TupleRad(), new HTuple(60).TupleRad(), hvMatchValue, 60, 0.5, "least_squares", new HTuple(5).TupleConcat(1), 0.75, out hv_MarkModelRow, out hv_MarkModelCol, out hv_MarkModelAngle, out hv_MarkScore);//đổi từ 48 sang 60 
+                ho_MarkModelContours.Dispose();
+                HOperatorSet.GetShapeModelContours(out ho_MarkModelContours, hv_MarkModelID, 1);
+                HOperatorSet.AreaCenter(ho_MarkModelRegion, out hv_MarkModelRegionArea, out hv_MarkRefRow, out hv_MarkRefCol);
+                HOperatorSet.VectorAngleToRigid(0, 0, 0, hv_MarkRefRow, hv_MarkRefCol, 0, out hv_MarkHomMat2D);
+                ho_MarkTransContours.Dispose();
+                HOperatorSet.AffineTransContourXld(ho_MarkModelContours, out ho_MarkTransContours, hv_MarkHomMat2D);
+                HOperatorSet.DispObj(ho_ModelImage, hv_WindowID);
+                HOperatorSet.SetColor(hv_WindowID, "green");
+                HOperatorSet.DispObj(ho_MarkTransContours, hv_WindowID);
+                HOperatorSet.SetColor(hv_WindowID, "red");
+                HOperatorSet.DispObj(ho_MarkModelRegion, hv_WindowID);
+                if (hWindow != null)
+                {
+                    if (!FindAllMark(ho_ModelImage, hWindow, hv_MarkModelID, ho_MarkModelRegion))
+                    {
+                        MessageBox.Show("Create Model fail！");
+                        return false;
+                    }
+                    bModelIsOK = true;
+                }
+                string szPath = Application.StartupPath + "\\Project\\UpCameraModel\\" + txtProjectNo.Text;
+                string ModelPath = szPath + "\\Model.shm";
+                string ModelRegionPath = szPath + "\\ModelRegion.reg";
+                string modelImagePath = szPath + "\\ModelImage.bmp";
+                if (!Directory.Exists(szPath))
+                {
+                    Directory.CreateDirectory(szPath);
+                }
+                HOperatorSet.WriteShapeModel(hv_MarkModelID, ModelPath);
+                HOperatorSet.ClearShapeModel(hv_MarkModelID);
+                HOperatorSet.WriteRegion(ho_MarkModelRegion, ModelRegionPath);
+                HOperatorSet.WriteImage(ho_ModelImage, "bmp", 0, modelImagePath);
+                btnTrain.BackColor = Color.White;
+                tmTrain.Enabled = false;
+                bTrainDetected = false;
+                MessageBox.Show("Create Model finish！");
+                return true;
+            }
+            catch (Exception)
+            {
+                CLogAssistant.instance.log_message("Create Model Fail!", ELogLevel.Error);
+                MessageBox.Show("Create Model fail！");
+                btnTrain.Enabled = true;
+                return false;
+            }
+        }
+        public void Swap<T>(ref T lhs, ref T rhs)
+        {
+            T temp = lhs;
+            lhs = rhs;
+            rhs = temp;
+
+        }
+        public Mat CropRotatedRect(Mat source, RotatedRect rect)
+        {
+            Mat matResult = new Mat();
+            RotatedRect rot = rect;
+            Point2f pCenter = new Point2f(rot.Center.X, rot.Center.Y);
+            Size2f rect_size = new Size2f(rot.Size.Width, rot.Size.Height);
+            RotatedRect rot2 = new RotatedRect(pCenter, rect_size, rot.Angle);
+            double angle = rot.Angle;
+            if (angle < -45)
+            {
+                angle += 90.0;
+
+                Swap(ref rect_size.Width, ref rect_size.Height);
+            }
+
+
+
+            InputArray M = Cv2.GetRotationMatrix2D(rot2.Center, angle, 1.0);
+
+            Mat crop1 = new Mat();
+            try
+            {
+                Cv2.WarpAffine(source, crop1, M, source.Size(), InterpolationFlags.Cubic);
+
+                Cv2.GetRectSubPix(crop1, new OpenCvSharp.Size(rect_size.Width, rect_size.Height), rot2.Center, matResult);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+
+            return matResult;
+        }
+        RotatedRect rotatedModel = new RotatedRect();
+        public async void DetectPosition(String path)
         {
 
+
+
+            try
+            {
+                HTuple w = 0, h = 0, type;
+
+                if (path != "")
+                    image.ReadImage(path);
+                IntPtr intPtr = image.GetImagePointer1(out type, out w, out h);
+
+                if (hWindow != null && image != null)
+                {
+                    HOperatorSet.GetImageSize(image, out var hvWidth, out var hvHeight);
+                    HOperatorSet.SetPart(hWindow, 0, 0, hvHeight - 1, hvWidth - 1);
+                    //  view.Location = new Point(pView.Width / 2 - hv_imageWidth / 2, pView.Height / 2 - hv_imageHeight / 2);
+                    HOperatorSet.DispObj(image, hWindow);
+                }
+                else
+                {
+                    btnTrain.BackColor = Color.White;
+                    btnTrain.Enabled = true;
+                    return;
+                    MessageBox.Show("ERROR:请先加载图片！");
+                }
+
+                Mat raw = new Mat(Convert.ToInt32(h.ToString()), Convert.ToInt32(w.ToString()), MatType.CV_8UC1, intPtr);
+                Mat gray = new Mat();
+                OpenCvSharp.Point[][] contours;
+                HierarchyIndex[] hierarchyIndices;
+                Mat matShow = raw.Clone();
+
+                Cv2.Threshold(raw, gray, CRecipeCamera.instance.config.iniThresholdValue, 255, ThresholdTypes.Binary);
+
+                //Mat show = gray.Clone();
+                //show = show.PyrDown();
+
+                //      Cv2.ImShow("raw", show);
+                Cv2.FindContours(gray, out contours, out hierarchyIndices, RetrievalModes.External, ContourApproximationModes.ApproxSimple);
+
+                double AreaMax = 0;
+                int indexMax = 0;
+                for (int i = 0; i < contours.Length; i++)
+                {
+                    double area = Cv2.ContourArea(contours[i]);
+                    if (area > AreaMax)
+                    {
+                        AreaMax = area;
+                        indexMax = i;
+                    }
+                }
+                RotatedRect rotatedRect = new RotatedRect();
+                rotatedRect = Cv2.MinAreaRect(contours[indexMax]);
+                rotatedRect.Size.Width -= rotatedRect.Size.Width / 10;
+                rotatedRect.Size.Height -= rotatedRect.Size.Height / 10;
+                Rect rectMax = Cv2.BoundingRect(contours[indexMax]);
+                rectMax.Width -= rectMax.Width / 3;
+                rectMax.Height -= rectMax.Height / 3;
+                Mat Roi = new Mat(raw.Clone(), rectMax); ;
+
+                Mat Crop = new Mat();
+                // Copy the data into new matrix
+                Roi.CopyTo(Crop);
+
+                //Mat Crop= new Mat(raw.Clone(), rectMax);// CropRotatedRect(raw.Clone(), rotatedRect);
+                Cv2.BitwiseNot(Crop, Crop);
+                Cv2.GaussianBlur(Crop, Crop, new OpenCvSharp.Size(5, 5), 5, 5);
+                Cv2.Threshold(Crop, Crop, 50, 255, ThresholdTypes.Otsu);
+                Mat kernel = Cv2.GetStructuringElement(MorphShapes.Ellipse, new OpenCvSharp.Size(9, 9));
+
+                Cv2.Dilate(Crop, Crop, kernel);
+                //Cv2.Erode(Crop, Crop, kernel);
+                //  Cv2.ImWrite("crop.png", Crop);
+                Cv2.FindContours(Crop, out contours, out hierarchyIndices, RetrievalModes.External, ContourApproximationModes.ApproxSimple);
+
+                OpenCvSharp.Point pCenter = new OpenCvSharp.Point(Crop.Width / 2, Crop.Height / 2);
+                double Min = 100000000000;
+                int indexModel = 0;
+                for (int i = 0; i < contours.Length; i++)
+                {
+
+                    double a = Cv2.ContourArea(contours[i]);
+
+                    if (a < 500) continue;
+                    double distance = Cv2.PointPolygonTest(contours[i], pCenter, true);
+                    Rect rect = Cv2.BoundingRect(contours[i]);
+                    if (rect.Width > Crop.Width - 20 || rect.Height > Crop.Height - 20)
+                        continue;
+                    if (Math.Abs(distance) < Min)
+                    {
+                        Min = Math.Abs(distance);
+                        indexModel = i;
+                    }
+                }
+                //  
+
+                rotatedModel = Cv2.MinAreaRect(contours[indexModel]);
+                rotatedModel.Size.Width += rotatedModel.Size.Width / 5;
+                rotatedModel.Size.Height += rotatedModel.Size.Height / 5;
+                Mat CropModel = CropRotatedRect(Crop.Clone(), rotatedModel);
+
+                rotatedModel.Center.X += rectMax.X;
+                rotatedModel.Center.Y += rectMax.Y;
+                Mat matRs = raw.Clone();
+                Cv2.CvtColor(matRs, matRs, ColorConversionCodes.GRAY2BGR);
+
+                Point2f[] vertices2f = new Point2f[4];
+                vertices2f = rotatedModel.Points();
+                OpenCvSharp.Point[] vertices = new OpenCvSharp.Point[4];
+                for (int i = 0; i < 4; ++i)
+                {
+                    vertices[i] = new OpenCvSharp.Point(vertices2f[i].X, vertices2f[i].Y);
+                }
+                Cv2.FillConvexPoly(matRs, vertices, Scalar.Green, LineTypes.Link8);
+
+                // Cv2.ImWrite("RS-" +rotatedModel.Angle+".png", matRs);
+                //Mat show2 = raw.Clone();
+                //Rect rect2 = new Rect((int)(rotatedModel.Center.X) - (int)(rotatedModel.Size.Width / 2), (int)(rotatedModel.Center.Y) - (int)(rotatedModel.Size.Height/2), (int)(rotatedModel.Size.Width), (int)(rotatedModel.Size.Height));
+                //rect2.X += rectMax.X;
+                //rect2.Y += rectMax.Y;
+                //Cv2.CvtColor(show2, show2, ColorConversionCodes.GRAY2BGR);
+                //Cv2.Rectangle(show2, rect2, Scalar.Green, 2);
+                //show2 = show2.PyrDown();
+
+                //Cv2.ImShow("a", show2);
+                /// Cv2.ImShow("Model", CropModel);
+                //RotatedRect rotatedRect = new RotatedRect();
+                //  rotatedRect = Cv2.MinAreaRect(contours[indexMax]);
+
+                float Width = Math.Max(rotatedRect.Size.Width, rotatedRect.Size.Height);
+                float Height = Math.Min(rotatedRect.Size.Width, rotatedRect.Size.Height);
+                yPage1 = rotatedRect.Center.Y + (Height / 2);
+                xPage1 = rotatedRect.Center.X;
+
+                yPage2 = rotatedRect.Center.Y;
+                xPage2 = rotatedRect.Center.X + (Width / 2);
+                anglePage1 = rotatedRect.Angle;
+                anglePage2 = rotatedRect.Angle;
+
+                await Task.Delay(500);
+                SetPosionPage(image, hWindow);
+                await Task.Delay(200);
+                CreateModelauto(image, hWindow);
+                ReLoadModel(hWindow);
+                btnTrain.BackColor = Color.White;
+                bTrain = false;
+                btnTrain.Enabled = true;
+
+                //   rotatedRect.
+
+
+
+
+
+                //Cv2.ImShow("oke", gray);
+
+            }
+            catch (Exception ex)
+            {
+                btnTrain.BackColor = Color.White;
+                bTrain = false;
+                btnTrain.Enabled = true;
+                //  MessageBox.Show(ex.Message);
+            }
+
+        }
+
+        public bool ReLoadModel(HTuple hv_WindowID)
+        {
+            HObject[] OTemp = new HObject[20];
+            HObject ho_ALLMarkRegionAffineTrans = null;
+            HObject ho_ModelImage = null;
+            HTuple hv_MarkRow = null;
+            HTuple hv_MarkCol = null;
+            HTuple hv_MarkModelRow = null;
+            HTuple hv_MarkModelCol = null;
+            HTuple hv_MarkModelAngle = null;
+            HTuple hv_MarkScore = null;
+            HTuple hv_MarkAngle = null;
+            HTuple hv_I = null;
+            HTuple hv_MarkHomMat2D2 = new HTuple();
+            HTuple hv_imageWidth = null;
+            HTuple hv_imageHeight = null;
+            HOperatorSet.GenEmptyObj(out ho_ModelImage);
+            HOperatorSet.GenEmptyObj(out var ho_MarkTemplateImage);
+            HOperatorSet.GenEmptyObj(out var _);
+            HOperatorSet.GenEmptyObj(out var _);
+            HOperatorSet.GenEmptyObj(out ho_ALLMarkRegionAffineTrans);
+            HTuple hv_FindA_RowLine1 = null;
+            HTuple hv_FindA_ColLine1 = null;
+            HTuple hv_DownRow = null;
+            HTuple hv_DownCol = null;
+            HTuple hv_DownPhi = null;
+            HTuple hv_DownLength11 = null;
+            HTuple hv_DownLength21 = null;
+            HTuple hv_i = null;
+            HTuple hv_Col = new HTuple();
+            HTuple hv_MeasureHandleA = new HTuple();
+            HTuple hv_RowEdgeA1 = new HTuple();
+            HTuple hv_ColumnEdgeA1 = new HTuple();
+            HTuple hv_AmplitudeA1 = new HTuple();
+            HTuple hv_DistanceA1 = new HTuple();
+            HTuple hv_RowBeginA = null;
+            HTuple hv_ColBeginA = null;
+            HTuple hv_RowEndA = null;
+            HTuple hv_ColEndA = null;
+            HTuple hv_Nr1 = null;
+            HTuple hv_Nc1 = null;
+            HTuple hv_Dist1 = null;
+            HTuple hv_FindB_RowLine = null;
+            HTuple hv_FindB_ColLine = null;
+            HTuple hv_LeftRow = null;
+            HTuple hv_LeftCol = null;
+            HTuple hv_LeftPhi = null;
+            HTuple hv_LeftLength11 = null;
+            HTuple hv_LeftLength21 = null;
+            HTuple hv_RowB = new HTuple();
+            HTuple hv_MeasureHandleB = new HTuple();
+            HTuple hv_RowEdgeB = new HTuple();
+            HTuple hv_ColumnEdgeB = new HTuple();
+            HTuple hv_AmplitudeB = new HTuple();
+            HTuple hv_DistanceB = new HTuple();
+            HTuple hv_RowBeginB = null;
+            HTuple hv_ColBeginB = null;
+            HTuple hv_RowEndB = null;
+            HTuple hv_ColEndB = null;
+            HTuple hv_AngleB = null;
+            HTuple hv_IsParallel = null;
+            HTuple hv_TimeJustProcess = new HTuple();
+            HTuple hv_Start = new HTuple();
+            HTuple hv_PageAngle = new HTuple();
+            HTuple hv_PageRow = new HTuple();
+            HTuple hv_PageCol = new HTuple();
+            HTuple hv_HomMat2D1 = new HTuple();
+            HTuple hv_Number = new HTuple();
+            HTuple hv_n = new HTuple();
+            HTuple hv_Row = new HTuple();
+            HTuple hv_Column = new HTuple();
+            HTuple hv_Angle = new HTuple();
+            HOperatorSet.GenEmptyObj(out var _);
+            HOperatorSet.GenEmptyObj(out var ho_Rectangle);
+            HOperatorSet.GenEmptyObj(out var ho_ContourA);
+            HOperatorSet.GenEmptyObj(out var ho_LeftRectangle);
+            HOperatorSet.GenEmptyObj(out var ho_ContourB);
+            HOperatorSet.GenEmptyObj(out var ho_ReduceImage);
+            HOperatorSet.GenEmptyObj(out var ho_Threshold);
+            string szPath = Application.StartupPath + "\\Project\\UpCameraModel\\";
+
+
+
+            string foldPath = "";
+            string ModelPath = "";
+            string ModelRegionPath = "";
+            string modelImagePath = "";
+
+            try
+            {
+                foldPath = szPath + txtProjectNo.Text;// dialog.SelectedPath;
+                int delectLength = foldPath.Length - szPath.Length;
+                int needLength = foldPath.Length - delectLength;
+                txtProjectNo.Text = foldPath.Substring(needLength, delectLength);
+                ModelPath = foldPath + "\\Model.shm";
+                ModelRegionPath = foldPath + "\\ModelRegion.reg";
+                modelImagePath = foldPath + "\\ModelImage.bmp";
+
+                ModelPathSA = ModelPath;//note
+                modelImagePathSA = modelImagePath;//note
+                ModelRegionPathSA = ModelRegionPath;//note
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("ERROR:please select correct project file!");
+            }
+            CRecipeCamera.instance.LoadConfig("SystemConfig.xml");
+            HTuple hvMatchValue = CRecipeCamera.instance.config.iniMatchValue;
+            HTuple hvThreshold = CRecipeCamera.instance.config.iniThresholdValue;
+            CRecipeCamera.instance.config.iniProjectNO = txtProjectNo.Text.ToString();
+            CRecipeCamera.instance.SaveConfig("SystemConfig.xml");
+            string strFileName2 = txtProjectNo.Text + "CameraConfig.xml";
+
+            strFileNameSA = strFileName2;//note
+
+            CRecipeCamera.instance.LoadConfig(strFileName2);
+            G.Setting.txtUpCameraTime.Text = Convert.ToString(CRecipeCamera.instance.config.iniUpCameraTime);
+            G.Setting.txtUpExposureTime.Text = Convert.ToString(CRecipeCamera.instance.config.iniUpExposureTime);
+            G.Setting.txtUpCameraGain.Text = Convert.ToString(CRecipeCamera.instance.config.iniUpCameraGain);
+      //      G.Setting.txtDelaySendTime.Text = Convert.ToString(CRecipeCamera.instance.config.iniDelaySendTime);
+            double exposureTime = Convert.ToDouble(G.Setting.txtUpExposureTime.Text.ToString());
+            double UpCameraGain = CRecipeCamera.instance.config.iniUpCameraGain;
+            try
+            {
+                HOperatorSet.SetFramegrabberParam(AcqHandle, "ExposureTime", exposureTime);
+                HOperatorSet.SetFramegrabberParam(AcqHandle, "Gain", UpCameraGain);
+                if (CRecipeCamera.instance.config.hvDwCameraResRow > 10 && CRecipeCamera.instance.config.hvDwCameraResCol > 10)
+                {
+                    // MessageBox.Show(CRecipeCamera.instance.config.hvDwCameraResCol+","+CRecipeCamera.instance.config.hvDwCameraResRow);
+                    HOperatorSet.SetFramegrabberParam(AcqHandle, "OffsetY", (int)0);
+                    HOperatorSet.SetFramegrabberParam(AcqHandle, "OffsetX", (int)0);
+                    HOperatorSet.SetFramegrabberParam(AcqHandle, "Height", (int)(CRecipeCamera.instance.config.hvDwCameraResRow));
+                    HOperatorSet.SetFramegrabberParam(AcqHandle, "Width", (int)(CRecipeCamera.instance.config.hvDwCameraResCol));
+                    HTuple MaxWidth = 0, MaxHeight = 0;
+                    HOperatorSet.GetFramegrabberParam(AcqHandle, "WidthMax", out MaxWidth);
+                    HOperatorSet.GetFramegrabberParam(AcqHandle, "HeightMax", out MaxHeight);
+                    HOperatorSet.SetFramegrabberParam(AcqHandle, "OffsetY", (int)((MaxHeight.I - CRecipeCamera.instance.config.hvDwCameraResRow) / 2));
+                    HOperatorSet.SetFramegrabberParam(AcqHandle, "OffsetX", (int)((MaxWidth.I - CRecipeCamera.instance.config.hvDwCameraResCol) / 2));
+                }//horizontalResolution, int verticalResolution
+
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            if (!bUnEnbleDownCamera)
+            {
+                string strDownPath = Application.StartupPath + "\\Project\\DownCameraModel\\" + txtProjectNo.Text;
+                string DownModelPath = strDownPath + "\\Model.shm";
+                try
+                {
+                    HOperatorSet.ReadShapeModel(DownModelPath, out hvDownModelID);
+                }
+                catch (Exception)
+                {
+                    CLogAssistant.instance.log_message("Read Model Fail!", ELogLevel.Error);
+                    MessageBox.Show("Error:Down camrea load model fail ！");
+                    return false;
+                }
+            }
+            try
+            {
+                HOperatorSet.ReadImage(out ho_ModelImage, modelImagePath);
+                HOperatorSet.GetImageSize(ho_ModelImage, out hv_imageWidth, out hv_imageHeight);
+                HOperatorSet.SetPart(hv_WindowID, 0, 0, hv_imageHeight - 1, hv_imageWidth - 1);
+                //   view.Location = new Point(pView.Width / 2 - hv_imageWidth / 2, pView.Height / 2 - hv_imageHeight / 2);
+                HOperatorSet.ReadRegion(out ho_MarkModelRegion, ModelRegionPath);
+                HOperatorSet.ReadShapeModel(ModelPath, out hv_MarkModelID);
+                ho_MarkTemplateImage.Dispose();
+                HOperatorSet.ReduceDomain(ho_ModelImage, ho_MarkModelRegion, out ho_MarkTemplateImage);
+                HOperatorSet.DispObj(ho_MarkTemplateImage, hv_WindowID);
+                HOperatorSet.FindShapeModel(ho_MarkTemplateImage, hv_MarkModelID, new HTuple(-30).TupleRad(), new HTuple(60).TupleRad(), hvMatchValue, 60, 0.5, "least_squares", new HTuple(5).TupleConcat(1), 0.75, out hv_MarkModelRow, out hv_MarkModelCol, out hv_MarkModelAngle, out hv_MarkScore);//đổi từ 48 sang 60 
+                HOperatorSet.DispObj(ho_ModelImage, hv_WindowID);
+                HOperatorSet.FindShapeModel(ho_ModelImage, hv_MarkModelID, new HTuple(-30).TupleRad(), new HTuple(60).TupleRad(), hvMatchValue, 60, 0.5, "least_squares", new HTuple(5).TupleConcat(1), 0.75, out hv_MarkRow, out hv_MarkCol, out hv_MarkAngle, out hv_MarkScore);//đổi từ 48 sang 60 
+                HOperatorSet.GenEmptyObj(out ho_Chambers);
+                hv_AllMarkArea = new HTuple();
+                hv_AllMarkRow = new HTuple();
+                hv_AllMarkCol = new HTuple();
+                hv_I = 0;
+                while ((int)hv_I <= (int)(new HTuple(hv_MarkScore.TupleLength()) - 1))
+                {
+                    HOperatorSet.SetColor(hv_WindowID, "green");
+                    HOperatorSet.DispCross(hv_WindowID, hv_MarkRow.TupleSelect(hv_I), hv_MarkCol.TupleSelect(hv_I), 10, hv_MarkAngle.TupleSelect(hv_I));
+                    HOperatorSet.VectorAngleToRigid(hv_MarkModelRow, hv_MarkModelCol, 0, hv_MarkRow.TupleSelect(hv_I), hv_MarkCol.TupleSelect(hv_I), 0, out hv_MarkHomMat2D2);
+                    ho_ALLMarkRegionAffineTrans.Dispose();
+                    HOperatorSet.AffineTransRegion(ho_MarkModelRegion, out ho_ALLMarkRegionAffineTrans, hv_MarkHomMat2D2, "false");
+                    HOperatorSet.ConcatObj(ho_Chambers, ho_ALLMarkRegionAffineTrans, out OTemp[0]);
+                    HOperatorSet.ReduceDomain(ho_ModelImage, ho_ALLMarkRegionAffineTrans, out ho_ReduceImage);
+                    HOperatorSet.Threshold(ho_ReduceImage, out ho_Threshold, 0, hvThreshold);
+                    HOperatorSet.AreaCenter(ho_Threshold, out var hv_ModelArea, out var hv_ModelRow, out var hv_ModelCol);
+                    hv_AllMarkArea = hv_AllMarkArea.TupleConcat(hv_ModelArea);
+                    hv_AllMarkRow = hv_AllMarkRow.TupleConcat(hv_MarkRow[hv_I]);
+                    hv_AllMarkCol = hv_AllMarkCol.TupleConcat(hv_MarkCol[hv_I]);
+                    string strModelArea = hv_ModelArea[0].D.ToString("0.0");
+                    string strMarkScore = hv_MarkScore[hv_I].D.ToString("0.0");
+                    set_display_font(hv_WindowID, 12, "mono", "true", "false");
+                    HOperatorSet.SetTposition(hv_WindowID, hv_ModelRow, hv_ModelCol);
+                    HOperatorSet.WriteString(hv_WindowID, strModelArea);
+                    HOperatorSet.SetTposition(hv_WindowID, hv_ModelRow - 50, hv_ModelCol);
+                    HOperatorSet.WriteString(hv_WindowID, strMarkScore);
+                    ho_Chambers.Dispose();
+                    ho_Chambers = OTemp[0];
+                    HOperatorSet.SetColor(hv_WindowID, "green");
+                    HOperatorSet.DispObj(ho_ALLMarkRegionAffineTrans, hv_WindowID);
+                    HOperatorSet.DispObj(ho_Chambers, hv_WindowID);
+                    HOperatorSet.SetColor(hv_WindowID, "red");
+                    HOperatorSet.DispObj(ho_Threshold, hv_WindowID);
+                    hv_I = (int)hv_I + 1;
+                }
+                CRecipeCamera.instance.LoadConfig("SystemConfig.xml");
+                hv_DownRow = CRecipeCamera.instance.config.iniDownRow;
+                hv_DownCol = CRecipeCamera.instance.config.iniDownCol;
+                hv_DownPhi = CRecipeCamera.instance.config.iniDownPhi;
+                hv_DownLength11 = CRecipeCamera.instance.config.iniDownLength11;
+                hv_DownLength21 = CRecipeCamera.instance.config.iniDownLength21;
+                hv_LeftRow = CRecipeCamera.instance.config.iniLeftRow;
+                hv_LeftCol = CRecipeCamera.instance.config.iniLeftCol;
+                hv_LeftPhi = CRecipeCamera.instance.config.iniLeftPhi;
+                hv_LeftLength11 = CRecipeCamera.instance.config.iniLeftLength11;
+                hv_LeftLength21 = CRecipeCamera.instance.config.iniLeftLength21;
+                hv_FindA_RowLine1 = new HTuple();
+                hv_FindA_ColLine1 = new HTuple();
+                HOperatorSet.GenRectangle2(out ho_Rectangle, hv_DownRow, hv_DownCol, hv_DownPhi, hv_DownLength11, hv_DownLength21);
+                HOperatorSet.SetColor(hv_WindowID, "green");
+                HOperatorSet.DispObj(ho_Rectangle, hv_WindowID);
+                hv_i = 0;
+                while ((int)hv_i <= 20)
+                {
+                    hv_Col = hv_DownCol + hv_i * 50;
+                    ho_Rectangle.Dispose();
+                    HOperatorSet.GenRectangle2(out ho_Rectangle, hv_DownRow, hv_Col, hv_DownPhi, hv_DownLength11, hv_DownLength21);
+                    HOperatorSet.GenMeasureRectangle2(hv_DownRow, hv_Col, hv_DownPhi, hv_DownLength11, hv_DownLength21, hv_imageWidth, hv_imageHeight, "nearest_neighbor", out hv_MeasureHandleA);
+                    HOperatorSet.MeasurePos(ho_ModelImage, hv_MeasureHandleA, 1, 40, "positive", "first", out hv_RowEdgeA1, out hv_ColumnEdgeA1, out hv_AmplitudeA1, out hv_DistanceA1);
+                    hv_FindA_RowLine1 = hv_FindA_RowLine1.TupleConcat(hv_RowEdgeA1);
+                    hv_FindA_ColLine1 = hv_FindA_ColLine1.TupleConcat(hv_ColumnEdgeA1);
+                    HOperatorSet.SetColor(hv_WindowID, "red");
+                    HOperatorSet.DispCross(hv_WindowID, hv_RowEdgeA1, hv_ColumnEdgeA1, 20, 45);
+                    HOperatorSet.CloseMeasure(hv_MeasureHandleA);
+                    hv_i = (int)hv_i + 1;
+                }
+                ho_ContourA.Dispose();
+                HOperatorSet.GenContourPolygonXld(out ho_ContourA, hv_FindA_RowLine1, hv_FindA_ColLine1);
+                HOperatorSet.FitLineContourXld(ho_ContourA, "tukey", -1, 0, 5, 1.345, out hv_RowBeginA, out hv_ColBeginA, out hv_RowEndA, out hv_ColEndA, out hv_Nr1, out hv_Nc1, out hv_Dist1);
+                HOperatorSet.SetColor(hv_WindowID, "green");
+                HOperatorSet.DispLine(hv_WindowID, hv_RowBeginA, hv_ColBeginA, hv_RowEndA, hv_ColEndA);
+                hv_FindB_RowLine = new HTuple();
+                hv_FindB_ColLine = new HTuple();
+                ho_LeftRectangle.Dispose();
+                HOperatorSet.GenRectangle2(out ho_LeftRectangle, hv_LeftRow, hv_LeftCol, hv_LeftPhi, hv_LeftLength11, hv_LeftLength21);
+                HOperatorSet.SetColor(hv_WindowID, "green");
+                HOperatorSet.DispObj(ho_LeftRectangle, hv_WindowID);
+                hv_i = 0;
+                while ((int)hv_i <= 20)
+                {
+                    hv_RowB = hv_LeftRow + hv_i * 30;
+                    ho_LeftRectangle.Dispose();
+                    HOperatorSet.GenRectangle2(out ho_LeftRectangle, hv_RowB, hv_LeftCol, hv_LeftPhi, hv_LeftLength11, hv_LeftLength21);
+                    HOperatorSet.GenMeasureRectangle2(hv_RowB, hv_LeftCol, hv_LeftPhi, hv_LeftLength11, hv_LeftLength21, hv_imageWidth, hv_imageHeight, "nearest_neighbor", out hv_MeasureHandleB);
+                    HOperatorSet.MeasurePos(ho_ModelImage, hv_MeasureHandleB, 1, 40, "positive", "first", out hv_RowEdgeB, out hv_ColumnEdgeB, out hv_AmplitudeB, out hv_DistanceB);
+                    hv_FindB_RowLine = hv_FindB_RowLine.TupleConcat(hv_RowEdgeB);
+                    hv_FindB_ColLine = hv_FindB_ColLine.TupleConcat(hv_ColumnEdgeB);
+                    HOperatorSet.SetColor(hv_WindowID, "red");
+                    HOperatorSet.DispCross(hv_WindowID, hv_RowEdgeB, hv_ColumnEdgeB, 20, 45);
+                    hv_i = (int)hv_i + 1;
+                }
+                HOperatorSet.CloseMeasure(hv_MeasureHandleB);
+                ho_ContourB.Dispose();
+                HOperatorSet.GenContourPolygonXld(out ho_ContourB, hv_FindB_RowLine, hv_FindB_ColLine);
+                HOperatorSet.FitLineContourXld(ho_ContourB, "tukey", -1, 0, 5, 1.345, out hv_RowBeginB, out hv_ColBeginB, out hv_RowEndB, out hv_ColEndB, out hv_Nr1, out hv_Nc1, out hv_Dist1);
+                HOperatorSet.SetColor(hv_WindowID, "green");
+                HOperatorSet.DispLine(hv_WindowID, hv_RowBeginB, hv_ColBeginB, hv_RowEndB, hv_ColEndB);
+                HOperatorSet.AngleLx(hv_RowBeginB, hv_ColBeginB, hv_RowEndB, hv_ColEndB, out hv_AngleB);
+                HOperatorSet.AngleLx(hv_RowBeginA, hv_ColBeginA, hv_RowEndA, hv_ColEndA, out hv_ModelPageAngle);
+                HOperatorSet.IntersectionLl(hv_RowBeginA, hv_ColBeginA, hv_RowEndA, hv_ColEndA, hv_RowBeginB, hv_ColBeginB, hv_RowEndB, hv_ColEndB, out hv_ModelPageRow, out hv_ModelPageCol, out hv_IsParallel);
+                HOperatorSet.SetColor(hv_WindowID, "red");
+                HOperatorSet.DispCross(hv_WindowID, hv_ModelPageRow, hv_ModelPageCol, 30, 0);
+                set_display_font(hv_WindowID, 20, "mono", "true", "false");
+                HOperatorSet.SetTposition(hv_WindowID, 50, 50);
+                HOperatorSet.WriteString(hv_WindowID, "Load model finish!");
+                HTuple hvMarkNum = "Mark Number：" + hv_MarkScore.Length;
+                HOperatorSet.SetTposition(hv_WindowID, 120, 50);
+                HOperatorSet.WriteString(hv_WindowID, hvMarkNum);
+                return true;
+            }
+            catch (Exception)
+            {
+                CLogAssistant.instance.log_message("Read Model Fail!", ELogLevel.Error);
+                MessageBox.Show("Error:Load project fail ！");
+                return false;
+            }
+
+            MessageBox.Show("please select project file !");
+            return false;
+        }
+
+        public bool LoadMarkRegion(HTuple hv_WindowID)
+        {
+            HObject[] OTemp = new HObject[20];
+            HObject ho_ALLMarkRegionAffineTrans = null;
+            HObject ho_ModelImage = null;
+            HTuple hv_MarkRow = null;
+            HTuple hv_MarkCol = null;
+            HTuple hv_MarkModelRow = null;
+            HTuple hv_MarkModelCol = null;
+            HTuple hv_MarkModelAngle = null;
+            HTuple hv_MarkScore = null;
+            HTuple hv_MarkAngle = null;
+            HTuple hv_I = null;
+            HTuple hv_MarkHomMat2D2 = new HTuple();
+            HTuple hv_imageWidth = null;
+            HTuple hv_imageHeight = null;
+            HOperatorSet.GenEmptyObj(out ho_ModelImage);
+            HOperatorSet.GenEmptyObj(out var ho_MarkTemplateImage);
+            HOperatorSet.GenEmptyObj(out var _);
+            HOperatorSet.GenEmptyObj(out var _);
+            HOperatorSet.GenEmptyObj(out ho_ALLMarkRegionAffineTrans);
+            HTuple hv_FindA_RowLine1 = null;
+            HTuple hv_FindA_ColLine1 = null;
+            HTuple hv_DownRow = null;
+            HTuple hv_DownCol = null;
+            HTuple hv_DownPhi = null;
+            HTuple hv_DownLength11 = null;
+            HTuple hv_DownLength21 = null;
+            HTuple hv_i = null;
+            HTuple hv_Col = new HTuple();
+            HTuple hv_MeasureHandleA = new HTuple();
+            HTuple hv_RowEdgeA1 = new HTuple();
+            HTuple hv_ColumnEdgeA1 = new HTuple();
+            HTuple hv_AmplitudeA1 = new HTuple();
+            HTuple hv_DistanceA1 = new HTuple();
+            HTuple hv_RowBeginA = null;
+            HTuple hv_ColBeginA = null;
+            HTuple hv_RowEndA = null;
+            HTuple hv_ColEndA = null;
+            HTuple hv_Nr1 = null;
+            HTuple hv_Nc1 = null;
+            HTuple hv_Dist1 = null;
+            HTuple hv_FindB_RowLine = null;
+            HTuple hv_FindB_ColLine = null;
+            HTuple hv_LeftRow = null;
+            HTuple hv_LeftCol = null;
+            HTuple hv_LeftPhi = null;
+            HTuple hv_LeftLength11 = null;
+            HTuple hv_LeftLength21 = null;
+            HTuple hv_RowB = new HTuple();
+            HTuple hv_MeasureHandleB = new HTuple();
+            HTuple hv_RowEdgeB = new HTuple();
+            HTuple hv_ColumnEdgeB = new HTuple();
+            HTuple hv_AmplitudeB = new HTuple();
+            HTuple hv_DistanceB = new HTuple();
+            HTuple hv_RowBeginB = null;
+            HTuple hv_ColBeginB = null;
+            HTuple hv_RowEndB = null;
+            HTuple hv_ColEndB = null;
+            HTuple hv_AngleB = null;
+            HTuple hv_IsParallel = null;
+            HTuple hv_TimeJustProcess = new HTuple();
+            HTuple hv_Start = new HTuple();
+            HTuple hv_PageAngle = new HTuple();
+            HTuple hv_PageRow = new HTuple();
+            HTuple hv_PageCol = new HTuple();
+            HTuple hv_HomMat2D1 = new HTuple();
+            HTuple hv_Number = new HTuple();
+            HTuple hv_n = new HTuple();
+            HTuple hv_Row = new HTuple();
+            HTuple hv_Column = new HTuple();
+            HTuple hv_Angle = new HTuple();
+            HOperatorSet.GenEmptyObj(out var _);
+            HOperatorSet.GenEmptyObj(out var ho_Rectangle);
+            HOperatorSet.GenEmptyObj(out var ho_ContourA);
+            HOperatorSet.GenEmptyObj(out var ho_LeftRectangle);
+            HOperatorSet.GenEmptyObj(out var ho_ContourB);
+            HOperatorSet.GenEmptyObj(out var ho_ReduceImage);
+            HOperatorSet.GenEmptyObj(out var ho_Threshold);
+            string szPath = Application.StartupPath + "\\Project\\UpCameraModel\\";
+
+
+            string foldPath = "";
+            string ModelPath = "";
+            string ModelRegionPath = "";
+            string modelImagePath = "";
+
+            try
+            {
+                foldPath = szPath + txtProjectNo.Text.Trim();// dialog.SelectedPath;
+                int delectLength = foldPath.Length - szPath.Length;
+                int needLength = foldPath.Length - delectLength;
+                txtProjectNo.Text = foldPath.Substring(needLength, delectLength);
+                ModelPath = foldPath + "\\Model.shm";
+                ModelRegionPath = foldPath + "\\ModelRegion.reg";
+                modelImagePath = foldPath + "\\ModelImage.bmp";
+
+                ModelPathSA = ModelPath;//note
+                modelImagePathSA = modelImagePath;//note
+                ModelRegionPathSA = ModelRegionPath;//note
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("ERROR:please select correct project file!");
+            }
+            CRecipeCamera.instance.LoadConfig("SystemConfig.xml");
+            HTuple hvMatchValue = CRecipeCamera.instance.config.iniMatchValue;
+            HTuple hvThreshold = CRecipeCamera.instance.config.iniThresholdValue;
+            CRecipeCamera.instance.config.iniProjectNO = txtProjectNo.Text.ToString();
+            CRecipeCamera.instance.SaveConfig("SystemConfig.xml");
+            string strFileName2 = txtProjectNo.Text + "CameraConfig.xml";
+
+            strFileNameSA = strFileName2;//note
+
+            CRecipeCamera.instance.LoadConfig(strFileName2);
+            G.Setting.txtUpCameraTime.Text = Convert.ToString(CRecipeCamera.instance.config.iniUpCameraTime);
+            G.Setting.txtUpExposureTime.Text = Convert.ToString(CRecipeCamera.instance.config.iniUpExposureTime);
+            G.Setting.txtUpCameraGain.Text = Convert.ToString(CRecipeCamera.instance.config.iniUpCameraGain);
+            //G.Setting.txtDelaySendTime.Text = Convert.ToString(CRecipeCamera.instance.config.iniDelaySendTime);
+            double exposureTime = Convert.ToDouble(G.Setting.txtUpExposureTime.Text.ToString());
+            double UpCameraGain = CRecipeCamera.instance.config.iniUpCameraGain;
+            try
+            {
+                HOperatorSet.SetFramegrabberParam(AcqHandle, "ExposureTime", exposureTime);
+                HOperatorSet.SetFramegrabberParam(AcqHandle, "Gain", UpCameraGain);
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("ERROR:UpCamera set ExposureTime fail!");
+            }
+            if (!bUnEnbleDownCamera)
+            {
+                string strDownPath = Application.StartupPath + "\\Project\\DownCameraModel\\" + txtProjectNo.Text;
+                string DownModelPath = strDownPath + "\\Model.shm";
+                try
+                {
+                    HOperatorSet.ReadShapeModel(DownModelPath, out hvDownModelID);
+                }
+                catch (Exception)
+                {
+                    CLogAssistant.instance.log_message("Read Model Fail!", ELogLevel.Error);
+                    MessageBox.Show("Error:Down camrea load model fail ！");
+                    return false;
+                }
+            }
+            try
+            {
+                HOperatorSet.ReadImage(out ho_ModelImage, modelImagePath);
+                HOperatorSet.GetImageSize(ho_ModelImage, out hv_imageWidth, out hv_imageHeight);
+                HOperatorSet.SetPart(hv_WindowID, 0, 0, hv_imageHeight - 1, hv_imageWidth - 1);
+                //  view.Location = new Point(pView.Width / 2 - hv_imageWidth / 2, pView.Height / 2 - hv_imageHeight / 2);
+                HOperatorSet.ReadRegion(out ho_MarkModelRegion, ModelRegionPath);
+                HOperatorSet.ReadShapeModel(ModelPath, out hv_MarkModelID);
+                ho_MarkTemplateImage.Dispose();
+                HOperatorSet.ReduceDomain(ho_ModelImage, ho_MarkModelRegion, out ho_MarkTemplateImage);
+                HOperatorSet.DispObj(ho_MarkTemplateImage, hv_WindowID);
+                HOperatorSet.FindShapeModel(ho_MarkTemplateImage, hv_MarkModelID, new HTuple(-30).TupleRad(), new HTuple(60).TupleRad(), hvMatchValue, 60, 0.5, "least_squares", new HTuple(5).TupleConcat(1), 0.75, out hv_MarkModelRow, out hv_MarkModelCol, out hv_MarkModelAngle, out hv_MarkScore);//đổi từ 48 sang 60 
+                HOperatorSet.DispObj(ho_ModelImage, hv_WindowID);
+                HOperatorSet.FindShapeModel(ho_ModelImage, hv_MarkModelID, new HTuple(-30).TupleRad(), new HTuple(60).TupleRad(), hvMatchValue, 60, 0.5, "least_squares", new HTuple(5).TupleConcat(1), 0.75, out hv_MarkRow, out hv_MarkCol, out hv_MarkAngle, out hv_MarkScore);//đổi từ 48 sang 60 
+                HOperatorSet.GenEmptyObj(out ho_Chambers);
+                hv_AllMarkArea = new HTuple();
+                hv_AllMarkRow = new HTuple();
+                hv_AllMarkCol = new HTuple();
+                hv_I = 0;
+                while ((int)hv_I <= (int)(new HTuple(hv_MarkScore.TupleLength()) - 1))
+                {
+                    HOperatorSet.SetColor(hv_WindowID, "green");
+                    HOperatorSet.DispCross(hv_WindowID, hv_MarkRow.TupleSelect(hv_I), hv_MarkCol.TupleSelect(hv_I), 10, hv_MarkAngle.TupleSelect(hv_I));
+                    HOperatorSet.VectorAngleToRigid(hv_MarkModelRow, hv_MarkModelCol, 0, hv_MarkRow.TupleSelect(hv_I), hv_MarkCol.TupleSelect(hv_I), 0, out hv_MarkHomMat2D2);
+                    ho_ALLMarkRegionAffineTrans.Dispose();
+                    HOperatorSet.AffineTransRegion(ho_MarkModelRegion, out ho_ALLMarkRegionAffineTrans, hv_MarkHomMat2D2, "false");
+                    HOperatorSet.ConcatObj(ho_Chambers, ho_ALLMarkRegionAffineTrans, out OTemp[0]);
+                    HOperatorSet.ReduceDomain(ho_ModelImage, ho_ALLMarkRegionAffineTrans, out ho_ReduceImage);
+                    HOperatorSet.Threshold(ho_ReduceImage, out ho_Threshold, 0, hvThreshold);
+                    HOperatorSet.AreaCenter(ho_Threshold, out var hv_ModelArea, out var hv_ModelRow, out var hv_ModelCol);
+                    hv_AllMarkArea = hv_AllMarkArea.TupleConcat(hv_ModelArea);
+                    hv_AllMarkRow = hv_AllMarkRow.TupleConcat(hv_MarkRow[hv_I]);
+                    hv_AllMarkCol = hv_AllMarkCol.TupleConcat(hv_MarkCol[hv_I]);
+                    string strModelArea = hv_ModelArea[0].D.ToString("0.0");
+                    string strMarkScore = hv_MarkScore[hv_I].D.ToString("0.0");
+                    set_display_font(hv_WindowID, 12, "mono", "true", "false");
+                    HOperatorSet.SetTposition(hv_WindowID, hv_ModelRow, hv_ModelCol);
+                    HOperatorSet.WriteString(hv_WindowID, strModelArea);
+                    HOperatorSet.SetTposition(hv_WindowID, hv_ModelRow - 50, hv_ModelCol);
+                    HOperatorSet.WriteString(hv_WindowID, strMarkScore);
+                    ho_Chambers.Dispose();
+                    ho_Chambers = OTemp[0];
+                    HOperatorSet.SetColor(hv_WindowID, "green");
+                    HOperatorSet.DispObj(ho_ALLMarkRegionAffineTrans, hv_WindowID);
+                    HOperatorSet.DispObj(ho_Chambers, hv_WindowID);
+                    HOperatorSet.SetColor(hv_WindowID, "red");
+                    HOperatorSet.DispObj(ho_Threshold, hv_WindowID);
+                    hv_I = (int)hv_I + 1;
+                }
+                CRecipeCamera.instance.LoadConfig("SystemConfig.xml");
+                hv_DownRow = CRecipeCamera.instance.config.iniDownRow;
+                hv_DownCol = CRecipeCamera.instance.config.iniDownCol;
+                hv_DownPhi = CRecipeCamera.instance.config.iniDownPhi;
+                hv_DownLength11 = CRecipeCamera.instance.config.iniDownLength11;
+                hv_DownLength21 = CRecipeCamera.instance.config.iniDownLength21;
+                hv_LeftRow = CRecipeCamera.instance.config.iniLeftRow;
+                hv_LeftCol = CRecipeCamera.instance.config.iniLeftCol;
+                hv_LeftPhi = CRecipeCamera.instance.config.iniLeftPhi;
+                hv_LeftLength11 = CRecipeCamera.instance.config.iniLeftLength11;
+                hv_LeftLength21 = CRecipeCamera.instance.config.iniLeftLength21;
+                hv_FindA_RowLine1 = new HTuple();
+                hv_FindA_ColLine1 = new HTuple();
+                HOperatorSet.GenRectangle2(out ho_Rectangle, hv_DownRow, hv_DownCol, hv_DownPhi, hv_DownLength11, hv_DownLength21);
+                HOperatorSet.SetColor(hv_WindowID, "green");
+                HOperatorSet.DispObj(ho_Rectangle, hv_WindowID);
+                hv_i = 0;
+                while ((int)hv_i <= 20)
+                {
+                    hv_Col = hv_DownCol + hv_i * 50;
+                    ho_Rectangle.Dispose();
+                    HOperatorSet.GenRectangle2(out ho_Rectangle, hv_DownRow, hv_Col, hv_DownPhi, hv_DownLength11, hv_DownLength21);
+                    HOperatorSet.GenMeasureRectangle2(hv_DownRow, hv_Col, hv_DownPhi, hv_DownLength11, hv_DownLength21, hv_imageWidth, hv_imageHeight, "nearest_neighbor", out hv_MeasureHandleA);
+                    HOperatorSet.MeasurePos(ho_ModelImage, hv_MeasureHandleA, 1, 40, "positive", "first", out hv_RowEdgeA1, out hv_ColumnEdgeA1, out hv_AmplitudeA1, out hv_DistanceA1);
+                    hv_FindA_RowLine1 = hv_FindA_RowLine1.TupleConcat(hv_RowEdgeA1);
+                    hv_FindA_ColLine1 = hv_FindA_ColLine1.TupleConcat(hv_ColumnEdgeA1);
+                    HOperatorSet.SetColor(hv_WindowID, "red");
+                    HOperatorSet.DispCross(hv_WindowID, hv_RowEdgeA1, hv_ColumnEdgeA1, 20, 45);
+                    HOperatorSet.CloseMeasure(hv_MeasureHandleA);
+                    hv_i = (int)hv_i + 1;
+                }
+                ho_ContourA.Dispose();
+                HOperatorSet.GenContourPolygonXld(out ho_ContourA, hv_FindA_RowLine1, hv_FindA_ColLine1);
+                HOperatorSet.FitLineContourXld(ho_ContourA, "tukey", -1, 0, 5, 1.345, out hv_RowBeginA, out hv_ColBeginA, out hv_RowEndA, out hv_ColEndA, out hv_Nr1, out hv_Nc1, out hv_Dist1);
+                HOperatorSet.SetColor(hv_WindowID, "green");
+                HOperatorSet.DispLine(hv_WindowID, hv_RowBeginA, hv_ColBeginA, hv_RowEndA, hv_ColEndA);
+                hv_FindB_RowLine = new HTuple();
+                hv_FindB_ColLine = new HTuple();
+                ho_LeftRectangle.Dispose();
+                HOperatorSet.GenRectangle2(out ho_LeftRectangle, hv_LeftRow, hv_LeftCol, hv_LeftPhi, hv_LeftLength11, hv_LeftLength21);
+                HOperatorSet.SetColor(hv_WindowID, "green");
+                HOperatorSet.DispObj(ho_LeftRectangle, hv_WindowID);
+                hv_i = 0;
+                while ((int)hv_i <= 20)
+                {
+                    hv_RowB = hv_LeftRow + hv_i * 30;
+                    ho_LeftRectangle.Dispose();
+                    HOperatorSet.GenRectangle2(out ho_LeftRectangle, hv_RowB, hv_LeftCol, hv_LeftPhi, hv_LeftLength11, hv_LeftLength21);
+                    HOperatorSet.GenMeasureRectangle2(hv_RowB, hv_LeftCol, hv_LeftPhi, hv_LeftLength11, hv_LeftLength21, hv_imageWidth, hv_imageHeight, "nearest_neighbor", out hv_MeasureHandleB);
+                    HOperatorSet.MeasurePos(ho_ModelImage, hv_MeasureHandleB, 1, 40, "positive", "first", out hv_RowEdgeB, out hv_ColumnEdgeB, out hv_AmplitudeB, out hv_DistanceB);
+                    hv_FindB_RowLine = hv_FindB_RowLine.TupleConcat(hv_RowEdgeB);
+                    hv_FindB_ColLine = hv_FindB_ColLine.TupleConcat(hv_ColumnEdgeB);
+                    HOperatorSet.SetColor(hv_WindowID, "red");
+                    HOperatorSet.DispCross(hv_WindowID, hv_RowEdgeB, hv_ColumnEdgeB, 20, 45);
+                    hv_i = (int)hv_i + 1;
+                }
+                HOperatorSet.CloseMeasure(hv_MeasureHandleB);
+                ho_ContourB.Dispose();
+                HOperatorSet.GenContourPolygonXld(out ho_ContourB, hv_FindB_RowLine, hv_FindB_ColLine);
+                HOperatorSet.FitLineContourXld(ho_ContourB, "tukey", -1, 0, 5, 1.345, out hv_RowBeginB, out hv_ColBeginB, out hv_RowEndB, out hv_ColEndB, out hv_Nr1, out hv_Nc1, out hv_Dist1);
+                HOperatorSet.SetColor(hv_WindowID, "green");
+                HOperatorSet.DispLine(hv_WindowID, hv_RowBeginB, hv_ColBeginB, hv_RowEndB, hv_ColEndB);
+                HOperatorSet.AngleLx(hv_RowBeginB, hv_ColBeginB, hv_RowEndB, hv_ColEndB, out hv_AngleB);
+                HOperatorSet.AngleLx(hv_RowBeginA, hv_ColBeginA, hv_RowEndA, hv_ColEndA, out hv_ModelPageAngle);
+                HOperatorSet.IntersectionLl(hv_RowBeginA, hv_ColBeginA, hv_RowEndA, hv_ColEndA, hv_RowBeginB, hv_ColBeginB, hv_RowEndB, hv_ColEndB, out hv_ModelPageRow, out hv_ModelPageCol, out hv_IsParallel);
+                HOperatorSet.SetColor(hv_WindowID, "red");
+                HOperatorSet.DispCross(hv_WindowID, hv_ModelPageRow, hv_ModelPageCol, 30, 0);
+                set_display_font(hv_WindowID, 20, "mono", "true", "false");
+                HOperatorSet.SetTposition(hv_WindowID, 50, 50);
+                HOperatorSet.WriteString(hv_WindowID, "Load model finish!");
+                HTuple hvMarkNum = "Mark Number：" + hv_MarkScore.Length;
+                HOperatorSet.SetTposition(hv_WindowID, 120, 50);
+                HOperatorSet.WriteString(hv_WindowID, hvMarkNum);
+                return true;
+            }
+            catch (Exception)
+            {
+                CLogAssistant.instance.log_message("Read Model Fail!", ELogLevel.Error);
+                MessageBox.Show("Error:Load project fail ！");
+                return false;
+            }
+
+            MessageBox.Show("please select project file !");
+            return false;
+        }
+        private void BtnRun_Click(object sender, EventArgs e)
+        {
+            btnTrain.Enabled = true;
             //if (!bUpCameraOK)
             //{
             //    MessageBox.Show("EEROR:Camera is closed !");
@@ -2478,13 +4056,13 @@ namespace AD_RFID
                     upCameraAutoThread = new Thread(ThreadUpCameraRun);
                     upCameraAutoThread.Start();
                     pControl.Enabled = false;
-                    pButton1.Enabled = false;
-                    pButton2.Enabled = false;
-                    pButton3.Enabled = false;
+
                     BtnRun.Text = "Stop";
-                    BtnRun.BackColor = Color.Red;
-                    BtnRun.ForeColor = Color.White;
+                    BtnRun.ForeColor = Color.DarkGoldenrod;
+                    //   BtnRun.ForeColor = Color.White;
                     lbNT.Text = "Run Mode";
+                    lbNT.ForeColor = Color.White;
+                    lbNT.BackColor = Color.Green;
                 }
                 else
                 {
@@ -2504,12 +4082,12 @@ namespace AD_RFID
                     }
                     pControl.Enabled = true;
                     BtnRun.Text = "Run";
-                    BtnRun.BackColor = Color.Green;
-                    BtnRun.ForeColor = Color.White;
-                    pButton1.Enabled = true;
-                    pButton2.Enabled = true;
-                    pButton3.Enabled = true;
+                    BtnRun.ForeColor = Color.Green;
+                    //BtnRun.ForeColor = Color.White;
+
                     lbNT.Text = "Manual Mode";
+                    lbNT.ForeColor = Color.White;
+                    lbNT.BackColor = Color.Silver;
                 }
             }
 
@@ -2672,14 +4250,14 @@ namespace AD_RFID
                 // Thêm cả hai HWindowControl vào panel view trong quá trình khởi tạo
                 _instance = this;
 
-                view.Controls.Add(hwindowctl); 
+                view.Controls.Add(hwindowctl);
                 hwindowctl.Dock = DockStyle.Fill;
                 hwindowctl.HalconWindow.SetDraw("margin");
                 hwindowctl.HalconWindow.SetLineWidth(1);
                 hwindowctl.HalconWindow.SetColor("green");
                 hWindow = hwindowctl.HalconWindow;
 
-                view.Controls.Add(hwindowctl02); 
+                view.Controls.Add(hwindowctl02);
                 hwindowctl02.Dock = DockStyle.Fill;
                 hwindowctl02.HalconWindow.SetDraw("margin");
                 hwindowctl02.HalconWindow.SetColor("green");
@@ -2697,6 +4275,8 @@ namespace AD_RFID
             G.Setting.ShowDialog();
         }
         private string strCurrentProjectNo = "";
+        double PerOK = 0, PerNg = 0;
+
         private void timer1_Tick(object sender, EventArgs e)
         {
             try
@@ -2708,6 +4288,7 @@ namespace AD_RFID
                 txtDoubleNum.Text = Convert.ToString(iDoubleNum);
                 txtDealWithTime.Text = strDealTime;
                 iUpCameraDelayGrabTime = Convert.ToInt32(G.Setting.txtUpCameraTime.Text.Trim());
+
                 double dyield0 = 0.0;
                 double dyield1 = 0.0;
                 double dReject = 0.0;
@@ -2718,8 +4299,10 @@ namespace AD_RFID
                     dReject = Convert.ToDouble(iDoubleNum + iMissNum + iOffsetPosNum);
                     double str1 = dyield0 / dyield1 * 100.0;
                     double str2 = dReject / dyield1 * 100.0;
-                    txtyield.Text = Convert.ToString(Math.Round(str1, 2));
-                    txtReject.Text = Convert.ToString(Math.Round(str2, 2));
+                    PerOK = Math.Round(str1, 2);
+                    PerNg = Math.Round(str2, 2);
+                    txtyield.Text = Convert.ToString(PerOK);
+                    txtReject.Text = Convert.ToString(PerNg);
                 }
                 DeleteNGImage();
             }
@@ -2805,11 +4388,11 @@ namespace AD_RFID
                 txtGrapImageTime.Text = Convert.ToString(fActiveTime);
             }
         }
-        
+
         private void SetCtrlWhenStartGrab()
         {
         }
-        
+
 
         private void btnUp_Click(object sender, EventArgs e)
         {
@@ -2832,10 +4415,10 @@ namespace AD_RFID
                 btnResetImage.Visible = true;
                 btnUp.BackColor = Color.Transparent;
                 btnDown.BackColor = Color.FromArgb(224, 224, 224);
-                hwindowctl.Visible = true;  
-                hwindowctl02.Visible = false;  
+                hwindowctl.Visible = true;
+                hwindowctl02.Visible = false;
             }
-            
+
         }
         public void GrapeImageDown()
         {
@@ -2845,6 +4428,7 @@ namespace AD_RFID
                 imageDown.GrabImage(AcqHandleDown);
                 imageDown.GetImageSize(out hv_imageWidth, out hv_imageHeight);
                 hwindowctl02.HalconWindow.SetPart(0, 0, hv_imageHeight - 1, hv_imageWidth - 1);
+                // view.Location = new Point(pView.Width / 2 - hv_imageWidth / 2, pView.Height / 2 - hv_imageHeight / 2);
                 hwindowctl02.HalconWindow.DispObj(imageDown);
                 HOperatorSet.SetTposition(hWindow02, 10, 10);
                 HOperatorSet.WriteString(hWindow02, "DownCamera");
@@ -2886,7 +4470,7 @@ namespace AD_RFID
                 hwindowctl.Visible = false;
                 hwindowctl02.Visible = true;
             }
-            
+
         }
         private delegate void UpdateUIHandler(string message, Color color);
 
@@ -2903,9 +4487,9 @@ namespace AD_RFID
                 lbNoti.BackColor = color;
             }
         }
-        private delegate void GetMarkValueHanler(string valueF, string valueH );
-
-        private void GetMarkValue(string valueF,string valueH)
+        private delegate void GetMarkValueHanler(string valueF, string valueH);
+        int numOK, numNG;
+        private void GetMarkValue(string valueF, string valueH)
         {
             if (InvokeRequired)
             {
@@ -2913,8 +4497,10 @@ namespace AD_RFID
             }
             else
             {
+                numOK = Convert.ToInt32(valueF);
                 lbOK.Text = valueF;
-                lbNG.Text = (Convert.ToInt16(valueH)  - Convert.ToInt16(valueF)).ToString();
+                numNG = Convert.ToInt16(valueH) - numOK;
+                lbNG.Text = (Convert.ToInt16(valueH) - Convert.ToInt16(valueF)).ToString();
                 if (Convert.ToInt16(lbNG.Text) < 0)
                 {
                     lbNG.Text = "0";
@@ -2933,7 +4519,7 @@ namespace AD_RFID
                 btnLive.Text = "Live";
                 btnTrig.Text = "Trigger";
                 btnLang.Text = "ENG";
-                btnADM.Text = "Admin";
+                btnReport.Text = "Admin";
                 btnHelp.Text = "Help";
                 btnSet.Text = "Setting";
                 label3.Text = "TrainModel";
@@ -2952,19 +4538,19 @@ namespace AD_RFID
                 btnSaveAs.Text = "Save As";
                 btnSelectZoomRegion.Text = "SelectZoomRegion";
                 btnResetImage.Text = "ResetImage";
-                label32.Text = "OK_Rate:";
-                label31.Text = "NG_Rate:";
-                label15.Text = "Miss/pcs:";
-                label13.Text = "Total/pcs:";
-                label36.Text = "Disslocation/pcs:";
-                label35.Text = "Double/pcs:";
+                // label32.Text = "OK_Rate:";
+                //  label31.Text = "NG_Rate:";
+                label15.Text = "Miss/Sheet:";
+                label13.Text = "Total/Sheet:";
+                label36.Text = "Disslocation/Sheet:";
+                label35.Text = "Double/Sheet:";
                 lbCycleTime.Text = "GrabTimeDelay/s";
                 toolStripStatusLabel1.Text = "Delaytime/s";
                 G.Setting.tabPage1.Text = "UpCameraParameter";
                 G.Setting.label12.Text = "GrabDelay:";
                 G.Setting.label14.Text = "Exposure:";
                 G.Setting.label7.Text = "Gain:";
-                G.Setting.label21.Text = "Send Delay:";
+               // G.Setting.label21.Text = "Send Delay:";
                 G.Setting.label20.Text = "Upper:";
                 G.Setting.label6.Text = "Up Camera Parameter";
                 G.Setting.label9.Text = "Left:";
@@ -2993,7 +4579,7 @@ namespace AD_RFID
                 btnLive.Text = "Trực tiếp";
                 btnTrig.Text = "Kích hoạt";
                 btnLang.Text = "VI";
-                btnADM.Text = "Quản trị";
+                btnReport.Text = "Quản trị";
                 btnHelp.Text = "Trợ giúp";
                 btnSet.Text = "Cài đặt";
                 label3.Text = "Huấn luyện";
@@ -3012,12 +4598,12 @@ namespace AD_RFID
 
                 btnSelectZoomRegion.Text = "Chọn Vùng Phóng To";
                 btnResetImage.Text = "Đặt Lại Ảnh";
-                label32.Text = "Tỷ lệ OK:";
-                label31.Text = "Tỷ lệ NG:";
-                label15.Text = "Lỗi/pcs:";
-                label13.Text = "Tổng/pcs:";
-                label36.Text = "Lệch/pcs:";
-                label35.Text = "Trùng/pcs:";
+                // label32.Text = "Tỷ lệ OK:";
+                // label31.Text = "Tỷ lệ NG:";
+                label15.Text = "Lỗi/Tờ:";
+                label13.Text = "Tổng/Tờ:";
+                label36.Text = "Lệch/Tờ:";
+                label35.Text = "Trùng/Tờ:";
                 lbCycleTime.Text = "Độ trễ Bắt ảnh/s";
                 toolStripStatusLabel1.Text = "Thời gian trễ/s";
 
@@ -3025,7 +4611,7 @@ namespace AD_RFID
                 G.Setting.label12.Text = "Trễ Bắt:";
                 G.Setting.label14.Text = "Phơi sáng:";
                 G.Setting.label7.Text = "Độ lợi:";
-                G.Setting.label21.Text = "Trễ Gửi:";
+               // G.Setting.label21.Text = "Trễ Gửi:";
                 G.Setting.label20.Text = "Trên:";
                 G.Setting.label6.Text = "Tham số Camera Trên";
                 G.Setting.label9.Text = "Trái:";
@@ -3053,12 +4639,12 @@ namespace AD_RFID
             }
             else
             {
-                pControl.Visible=false;
-                panel12.Enabled= false;
-                pButton1.Visible=false;
-                pButton2.Visible=false;
-                pButton3.Visible=false;
-                panel20.Visible= false;
+                pControl.Visible = false;
+                panel12.Enabled = false;
+                pButton1.Visible = false;
+                pButton2.Visible = false;
+                pButton3.Visible = false;
+                panel20.Visible = false;
                 if (!bUpCameraOK)
                 {
                     MessageBox.Show("Please Check Connect Camera");
@@ -3071,60 +4657,60 @@ namespace AD_RFID
         }
         private void btnSaveAs_Click(object sender, EventArgs e)
         {
-            using (FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog())
+            //using (FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog())
+            //{
+            //    folderBrowserDialog.Description = "Choose Destination Folder to Save Model";
+
+            //    if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
+            //    {
+            string destinationFolderPath = Application.StartupPath;
+            string originalFolderName = txtProjectNo.Text;
+            string newFolderName = Microsoft.VisualBasic.Interaction.InputBox("Enter new folder name", "Rename Folder", originalFolderName);
+
+            if (string.IsNullOrEmpty(newFolderName))
             {
-                folderBrowserDialog.Description = "Choose Destination Folder to Save Model";
+                MessageBox.Show("Save operation was canceled.");
+                return;
+            }
 
-                if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
+            string mainProjectPath = Path.Combine(Application.StartupPath, "Project", "UpCameraModel", originalFolderName);
+
+            string cameraConfigFilePath = Path.Combine(Application.StartupPath, "partname", originalFolderName + "CameraConfig.xml");
+
+            string newMainProjectPath = Path.Combine(destinationFolderPath, "Project", "UpCameraModel", newFolderName);
+            string newCameraConfigFilePath = Path.Combine(destinationFolderPath, "partname", newFolderName + "CameraConfig.xml");
+
+            try
+            {
+                DirectoryInfo mainDir = new DirectoryInfo(mainProjectPath);
+                if (!mainDir.Exists)
                 {
-                    string destinationFolderPath = folderBrowserDialog.SelectedPath;
-                    string originalFolderName = txtProjectNo.Text;
-                    string newFolderName = Microsoft.VisualBasic.Interaction.InputBox("Enter new folder name", "Rename Folder", originalFolderName);
+                    MessageBox.Show("Source directory does not exist: " + mainProjectPath);
+                    return;
+                }
+                CopyDirectoryContents(mainProjectPath, newMainProjectPath);
 
-                    if (string.IsNullOrEmpty(newFolderName))
-                    {
-                        MessageBox.Show("Save operation was canceled.");
-                        return;
-                    }
-
-                    string mainProjectPath = Path.Combine(Application.StartupPath, "Project", "UpCameraModel", originalFolderName);
-
-                    string cameraConfigFilePath = Path.Combine(Application.StartupPath, "partname", originalFolderName + "CameraConfig.xml");
-
-                    string newMainProjectPath = Path.Combine(destinationFolderPath, newFolderName);
-                    string newCameraConfigFilePath = Path.Combine(destinationFolderPath, newFolderName + "CameraConfig.xml");
-
-                    try
-                    {
-                        DirectoryInfo mainDir = new DirectoryInfo(mainProjectPath);
-                        if (!mainDir.Exists)
-                        {
-                            MessageBox.Show("Source directory does not exist: " + mainProjectPath);
-                            return;
-                        }
-                        CopyDirectoryContents(mainProjectPath, newMainProjectPath);
-
-                        if (File.Exists(cameraConfigFilePath))
-                        {
-                            File.Copy(cameraConfigFilePath, newCameraConfigFilePath, true);
-                        }
-                        else
-                        {
-                            MessageBox.Show("Camera config file does not exist: " + cameraConfigFilePath);
-                        }
-
-                        MessageBox.Show("Model folder and CameraConfig file saved successfully to: " + destinationFolderPath);
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("Error saving folders and file: " + ex.Message);
-                    }
+                if (File.Exists(cameraConfigFilePath))
+                {
+                    File.Copy(cameraConfigFilePath, newCameraConfigFilePath, true);
                 }
                 else
                 {
-                    MessageBox.Show("Please select a folder to save the project.");
+                    MessageBox.Show("Camera config file does not exist: " + cameraConfigFilePath);
                 }
+
+                MessageBox.Show("Model folder and CameraConfig file saved successfully to: " + destinationFolderPath);
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error saving folders and file: " + ex.Message);
+            }
+            //}
+            //else
+            //{
+            //    MessageBox.Show("Please select a folder to save the project.");
+            //    }
+            //}
         }
 
         private void CopyDirectoryContents(string sourceDir, string destDir)
@@ -3142,5 +4728,232 @@ namespace AD_RFID
                 CopyDirectoryContents(subdir.FullName, destSubDir);
             }
         }
-    }
+        public bool bSimulation = false;
+
+        private void tmMouseRightDown_Tick(object sender, EventArgs e)
+        {
+            RightClick();
+            tmMouseRightDown.Enabled = false;
+
+        }
+
+        private void view_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void btnReset_Click(object sender, EventArgs e)
+        {
+            iMissNum = 0;
+            iAllNum = 0;
+            iDoubleNum = 0;
+            iOffsetPosNum = 0;
+            G.Setting.txtUpCameraTime.Text = "0";
+            strCurrentProjectNo = txtProjectNo.Text;
+            txtMissNum.Text = Convert.ToString(iMissNum);
+            txtOKNum.Text = Convert.ToString(iAllNum);
+            txtOffsetPosNum.Text = Convert.ToString(iOffsetPosNum);
+            txtDoubleNum.Text = Convert.ToString(iDoubleNum);
+            txtDealWithTime.Text = strDealTime;
+            iUpCameraDelayGrabTime = Convert.ToInt32(G.Setting.txtUpCameraTime.Text.Trim());
+        }
+
+        private void btnReport_Click(object sender, EventArgs e)
+        {
+            G.Report.ShowDialog();
+        }
+
+        private void chkShowEable_Click(object sender, EventArgs e)
+        {
+            G.FormMain.bEnbleShow = chkShowEable.IsCLick;
+            G.Config.IsDetail = chkShowEable.IsCLick;
+            if (File.Exists("Default.config"))
+                File.Delete("Default.config");
+            Access.SaveConfig("Default.config", G.Config);
+        }
+
+        bool IsWebCam = false;
+        private void btnWebCam_Click(object sender, EventArgs e)
+        {
+            IsWebCam = !IsWebCam;
+
+            if (IsWebCam)
+            {
+                G.WebCam = new WebCam();
+                G.WebCam.Show();
+                btnWebCam.BackColor = Color.DarkGoldenrod;
+                if (!workWebCam.IsBusy)
+                {
+                    workWebCam.RunWorkerAsync();
+                }
+            }
+            else
+            {
+                G.WebCam.Hide();
+                btnWebCam.BackColor = Color.White;
+            }
+        }
+        VideoCapture webCam = new VideoCapture(0);
+        Mat matWebCam = new Mat();
+        private void workWebCam_DoWork(object sender, DoWorkEventArgs e)
+        {
+            if (!webCam.IsOpened())
+            {
+                webCam.Open(0);
+
+                // webCam.Set(VideoCaptureProperties.fl)
+            }
+            if (webCam.IsOpened())
+            {
+
+                webCam.Read(matWebCam);
+                webCam.Read(matWebCam);
+            }
+        }
+
+        private void txtPO_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            DataTable dt = new DataTable();
+            string item = txtPO.SelectedItem.ToString();
+            if (G.Server.Check("*", "PO", $"PO='{item}'", G.cnnPO))
+            {
+                dt = G.Server.Table(" OK,"+" NG,"+" Total,"+" Miss,"+" NGPosition,"+" DoublePcs", "PO", $"PO='{item}'", G.cnnPO, "");
+
+
+                foreach (DataRow row in dt.Rows)
+                {
+                    txtyield.Text = row["OK"].ToString();
+                    txtReject.Text = row["NG"].ToString();
+                    txtOKNum.Text = row["Total"].ToString();
+                    txtMissNum.Text = row["Miss"].ToString();
+                    txtOffsetPosNum.Text = row["NGPosition"].ToString();
+                    txtDoubleNum.Text = row["DoublePcs"].ToString();
+              
+                }
+            }
+        }
+
+        private void FormMain_SizeChanged(object sender, EventArgs e)
+        {
+          //  view.Size = new Size(pView.Width, pView.Height);
+        }
+
+        private void workWebCam_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            Cv2.Flip(matWebCam, matWebCam, 0);
+            G.WebCam.picView.ImageIpl = matWebCam;
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            Thread.Sleep(2);
+            if (IsWebCam)
+                workWebCam.RunWorkerAsync();
+            else
+            {
+                if (webCam.IsOpened())
+                {
+                    webCam.Release();
+                 //   webCam.Dispose();
+
+                }
+            }
+           
+        }
+
+        private void txtPO_KeyDown(object sender, KeyEventArgs e)
+        {
+            if(e.KeyCode==Keys.Enter)
+            {
+                SQL_PO();
+            }
+            try
+            {
+                DataTable dt = G.Server.Table("PO", "PO", "", G.cnnPO, " ORDER BY Date DESC");
+                if (dt.Rows.Count > 0)
+                {
+                    var poList = dt.AsEnumerable().Select(row => row["PO"]).ToList();
+                    txtPO.DataSource = poList;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Ghi lại ngoại lệ để dễ kiểm tra
+                Console.WriteLine(ex.Message);
+            }
+        }
+        public void SQL_DelectPO()
+        {
+            string sqlTrunc = "TRUNCATE TABLE " + "PO";
+            SqlCommand cmd = new SqlCommand(sqlTrunc, G.cnnPO);
+            cmd.ExecuteNonQuery();
+            cmd.CommandText = (" DBCC CHECKIDENT('PO', RESEED,0)");
+            cmd.ExecuteNonQuery();
+        }
+        string PO = "";
+        private void btnEnter_Click(object sender, EventArgs e)
+        {
+            SQL_DelectPO();
+
+            PO = "";
+
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+
+        {
+            bSimulation = !bSimulation;
+            if (bSimulation)
+            {
+                
+                btnSimulation.BackColor = Color.DarkGoldenrod;
+            }
+            else
+            {
+            
+                btnSimulation.BackColor = Color.White;
+            }
+        }
+
+        private void btnKich_Click(object sender, EventArgs e)
+        {
+            bGrabStart = true;
+            DetectPosition("test4.bmp");
+        }
+
+        public bool bTrain;
+        private void btnTrain_Click(object sender, EventArgs e)
+        {
+            bTrain = !bTrain;
+            if (bTrain)
+            {
+                if (m_bRunFlg)
+                   BtnRun.PerformClick();
+                btnTrain.Enabled = false;
+                
+                btnTrain.BackColor = Color.DarkGoldenrod;
+                DetectPosition("");
+                bTrainDetected = false;
+            }
+            else
+            {
+                btnTrain.BackColor = Color.White;
+                tmTrain.Enabled = false;
+                bTrainDetected = false;
+
+            }
+        }
+        bool bTrainDetected = false;
+        private void tmTrain_Tick(object sender, EventArgs e)
+        {
+            if (bTrainDetected )
+            {
+                
+               
+                //tmTrain.Enabled = false;
+                //bTrainDetected = false;
+             
+                //DetectPosition("");
+                
+            }
+        }
+    }   
 }

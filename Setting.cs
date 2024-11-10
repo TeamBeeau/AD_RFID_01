@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -26,23 +27,37 @@ namespace AD_RFID
         }
         private void btnSaveCameraPra_Click_1(object sender, EventArgs e)
         {
-            string strFileNamel = G.FormMain.txtProjectNo.Text + "CameraConfig.xml";
-            CRecipeCamera.instance.LoadConfig(strFileNamel);
-            CRecipeCamera.instance.config.iniUpCameraTime = Convert.ToInt32(txtUpCameraTime.Text.ToString());
-            CRecipeCamera.instance.config.iniUpExposureTime = Convert.ToInt32(txtUpExposureTime.Text.ToString());
+            //  string strFileNamel = G.FormMain.txtProjectNo.Text + "CameraConfig.xml";
+            //  CRecipeCamera.instance.LoadConfig(strFileNamel);
+            //  CRecipeCamera.instance.config.iniUpCameraTime = Convert.ToInt32(txtUpCameraTime.Text.ToString());
+
+            // // CRecipeCamera.instance.config.iniDelaySendTime = Convert.ToInt32(txtDelaySendTime.Text.ToString());
+            //  String[] sp = cbReSolution.Text.Split(' ');
+            //  String[] sp2 = sp[0].Split('x');
+
+            //int colCCD = Convert.ToInt32(sp2[0]);
+            // int rowCCD = Convert.ToInt32(sp2[1]);
+            //  CRecipeCamera.instance.config.hvDwCameraResRow = Convert.ToInt32(rowCCD);
+            //  CRecipeCamera.instance.config.hvDwCameraResCol= Convert.ToInt32(colCCD);
+            //  CRecipeCamera.instance.SaveConfig(strFileNamel);
+             CRecipeCamera.instance.config.iniUpExposureTime = Convert.ToInt32(txtUpExposureTime.Text.ToString());
             CRecipeCamera.instance.config.iniUpCameraGain = Convert.ToDouble(txtUpCameraGain.Text.ToString());
-            CRecipeCamera.instance.config.iniDelaySendTime = Convert.ToInt32(txtDelaySendTime.Text.ToString());
-            CRecipeCamera.instance.SaveConfig(strFileNamel);
-            double exposureTime = Convert.ToDouble(txtUpExposureTime.Text.ToString());
+            double exposureTime = CRecipeCamera.instance.config.iniUpExposureTime;
             double UpCameraGain = CRecipeCamera.instance.config.iniUpCameraGain;
             try
             {
+               
                 HOperatorSet.SetFramegrabberParam(G.FormMain.AcqHandle, "ExposureTime", exposureTime);
                 HOperatorSet.SetFramegrabberParam(G.FormMain.AcqHandle, "Gain", UpCameraGain);
+               
+               // HOperatorSet.GetFramegrabberParam(G.FormMain.G.FormMain.AcqHandle, "WidthMax", out MaxWidth);
+               // HOperatorSet.GetFramegrabberParam(G.FormMain.AcqHandle, "HeightMax", out MaxHeight);
+               //  HOperatorSet.SetFramegrabberParam(G.FormMain.AcqHandle, "OffsetY", (int)((MaxHeight.I - CRecipeCamera.instance.config.hvDwCameraResRow) / 2));
+               // HOperatorSet.SetFramegrabberParam(G.FormMain.AcqHandle, "OffsetX", (int)((MaxWidth.I - CRecipeCamera.instance.config.hvDwCameraResCol) / 2));
             }
-            catch (Exception)
+            catch (Exception  ex)
             {
-                MessageBox.Show("ERROR:UpCamera set ExposureTime or Gain fail!");
+                MessageBox.Show(ex.Message);
             }
         }
 
@@ -86,14 +101,7 @@ namespace AD_RFID
 
         private void chkShowEable_CheckedChanged(object sender, EventArgs e)
         {
-            if (chkShowEable.Checked)
-            {
-                G.FormMain.bEnbleShow = true;
-            }
-            else
-            {
-                G.FormMain.bEnbleShow = false;
-            }
+           
         }
 
         private void btnSaveDownCameraPra_Click(object sender, EventArgs e)
@@ -130,6 +138,219 @@ namespace AD_RFID
             G.FormMain.nSaveNGimageDay = Convert.ToInt32(cmbSaveNgDay.SelectedItem);
             CRecipeCamera.instance.config.iniSaveNGDayCmbIndex = cmbSaveNgDay.SelectedIndex;
             CRecipeCamera.instance.SaveConfig("SystemConfig.xml");
+        }
+
+        private void txtThresholdValue_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void txtScale_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+        int MaxWidth = 0, MaxHeight = 0;
+        private void Setting_Load(object sender, EventArgs e)
+        {
+            string strFileName2 =G.FormMain.txtProjectNo.Text + "CameraConfig.xml";
+
+            
+            CRecipeCamera.instance.LoadConfig(strFileName2);
+            try
+            {
+
+                HTuple MaxW=0, MaxH=0;
+                HOperatorSet.GetFramegrabberParam(G.FormMain.AcqHandle, "WidthMax", out MaxW);
+                HOperatorSet.GetFramegrabberParam(G.FormMain.AcqHandle, "HeightMax", out MaxH);
+                MaxHeight = MaxH;
+                MaxWidth = MaxW;
+            }
+            catch(Exception ex)
+            {
+
+            }
+            //trackWidth.Maximum = MaxWidth;
+            //trackHeight.Maximum = MaxHeight;
+            trackWidth.Value =(int) CRecipeCamera.instance.config.hvUpCameraResCol;
+            trackHeight.Value = (int)CRecipeCamera.instance.config.hvUpCameraResRow;
+            trackOffSetX.Maximum = (int)MaxWidth - trackWidth.Value;
+            trackOffSetY.Maximum = (int)MaxHeight - trackHeight.Value;
+            trackOffSetX.Value = (int)CRecipeCamera.instance.config.hvUpROI_COL1;
+            trackOffSetY.Value = (int)CRecipeCamera.instance.config.hvUpROI_ROW1;
+
+            trackWidth.Maximum = (int)MaxWidth - trackOffSetX.Value;
+            trackHeight.Maximum = (int)MaxHeight - trackOffSetY.Value;
+
+            // cbReSolution.Text = CRecipeCamera.instance.config.hvDwCameraResCol + "x" + CRecipeCamera.instance.config.hvDwCameraResRow;
+            btnRaw.IsCLick = G.Config.IsSaveRaw;
+            btnNG.IsCLick=G.Config.IsSaveNG;
+            trackDay.Value = G.Config.LimitDateSave;
+            lbDay.Text = G.Config.LimitDateSave + "";
+            switch (G.Config.TypeSave)
+            {
+                case 0: btnSmall.IsCLick=true; 
+                     break;
+                case 1: btnMedium.IsCLick = true;  break;
+                case 2: btnBig.IsCLick = true;  break;
+            }    
+           
+        }
+
+        private void panel3_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string strFileNamel = G.FormMain.txtProjectNo.Text + "CameraConfig.xml";
+                CRecipeCamera.instance.LoadConfig(strFileNamel);
+                CRecipeCamera.instance.config.iniUpCameraTime = Convert.ToInt32(txtUpCameraTime.Text.ToString());
+                CRecipeCamera.instance.config.iniUpExposureTime = (int)txtUpExposureTime.Value;
+                CRecipeCamera.instance.config.iniUpCameraGain = (int)txtUpCameraGain.Value;
+                CRecipeCamera.instance.config.hvUpCameraResRow = trackHeight.Value;//  Convert.ToInt32(rowCCD);
+                CRecipeCamera.instance.config.hvUpCameraResCol = trackWidth.Value;// Convert.ToInt32(colCCD);
+                CRecipeCamera.instance.config.hvUpROI_COL1 = trackOffSetX.Value;//  Convert.ToInt32(rowCCD);
+                CRecipeCamera.instance.config.hvUpROI_ROW1 = trackOffSetY.Value;// Convert.ToInt32(colCCD);
+                CRecipeCamera.instance.SaveConfig(strFileNamel);
+         }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+
+        }
+
+        private void btnOK_Click(object sender, EventArgs e)
+        {
+            G.Config.IsSaveOK = btnOK.IsCLick;
+        }
+
+        private void btnNG_Click(object sender, EventArgs e)
+        {
+            G.Config.IsSaveNG = btnNG.IsCLick;
+        }
+
+        private void btnRaw_Click(object sender, EventArgs e)
+        {
+            G.Config.IsSaveRaw = btnRaw.IsCLick;
+        }
+
+        private void btnResult_Click(object sender, EventArgs e)
+        {
+            G.Config.IsSaveRS = btnResult.IsCLick;
+        }
+
+        private void trackDay_ValueChanged(object sender, EventArgs e)
+        {
+            G.Config.LimitDateSave = trackDay.Value;
+            lbDay.Text = G.Config.LimitDateSave + "";
+        }
+
+        private void btnSet3_Click(object sender, EventArgs e)
+        {
+            if (File.Exists("Default.config"))
+                File.Delete("Default.config");
+            Access.SaveConfig("Default.config", G.Config);
+        }
+
+        private void trackWidth_ValueChanged(object sender, EventArgs e)
+        {
+           
+            CRecipeCamera.instance.config.hvUpCameraResCol=trackWidth.Value;
+            trackOffSetX.Maximum = (int)MaxWidth - (int)CRecipeCamera.instance.config.hvUpCameraResCol;
+            lbWidth.Text = trackWidth.Value + "";
+            if (!G.FormMain.bUpCameraLive)
+            {
+                try
+                {
+                   // HOperatorSet.SetFramegrabberParam(G.FormMain.AcqHandle, "OffsetX", (int)0);
+                    HOperatorSet.SetFramegrabberParam(G.FormMain.AcqHandle, "Width", (int)(CRecipeCamera.instance.config.hvUpCameraResCol));
+                }
+                catch(Exception ex) { MessageBox.Show(ex.Message); }
+            }
+          
+        }
+
+        private void trackHeight_ValueChanged(object sender, EventArgs e)
+        {
+            CRecipeCamera.instance.config.hvUpCameraResRow = trackHeight.Value;
+            trackOffSetY.Maximum = (int)MaxHeight - (int)CRecipeCamera.instance.config.hvUpCameraResRow;
+            lbHeight.Text = trackHeight.Value + "";
+            if (!G.FormMain.bUpCameraLive)
+            {
+                try
+                {
+                    //  HOperatorSet.SetFramegrabberParam(G.FormMain.AcqHandle, "OffsetY", (int)0);
+                    HOperatorSet.SetFramegrabberParam(G.FormMain.AcqHandle, "Height", (int)(CRecipeCamera.instance.config.hvUpCameraResRow));
+                }
+                catch (Exception ex) { MessageBox.Show(ex.Message); }
+            }
+        }
+
+        private void trackOffSetX_ValueChanged(object sender, EventArgs e)
+        {
+            CRecipeCamera.instance.config.hvUpROI_COL1 = trackOffSetX.Value;
+            trackWidth.Maximum = (int)MaxWidth - trackOffSetX.Value;
+            lbX.Text = trackOffSetX.Value + "";
+            try
+            {
+                 HOperatorSet.SetFramegrabberParam(G.FormMain.AcqHandle, "OffsetX", trackOffSetX.Value);
+               // HOperatorSet.SetFramegrabberParam(G.FormMain.AcqHandle, "Width", (int)(CRecipeCamera.instance.config.hvDwCameraResCol));
+            }
+            catch (Exception ex) { MessageBox.Show(ex.Message); }
+
+        }
+
+        private void trackOffSetY_ValueChanged(object sender, EventArgs e)
+        {
+            CRecipeCamera.instance.config.hvUpROI_ROW1 = trackOffSetY.Value;
+            trackHeight.Maximum = (int)MaxHeight - (int)trackOffSetY.Value;
+            lbY.Text = trackOffSetY.Value + "";
+            try
+            {
+                 HOperatorSet.SetFramegrabberParam(G.FormMain.AcqHandle, "OffsetY", trackOffSetY.Value);
+               // HOperatorSet.SetFramegrabberParam(G.FormMain.AcqHandle, "Height", (int)(CRecipeCamera.instance.config.hvDwCameraResRow));
+            }
+            catch (Exception ex) { MessageBox.Show(ex.Message); }
+        }
+
+        private void txtUpCameraGain_ValueChanged(object sender, EventArgs e)
+        {
+            CRecipeCamera.instance.config.iniUpCameraGain = (int)txtUpCameraGain.Value;
+            try
+            {
+                HOperatorSet.SetFramegrabberParam(G.FormMain.AcqHandle, "Gain", CRecipeCamera.instance.config.iniUpExposureTime);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void txtUpExposureTime_ValueChanged(object sender, EventArgs e)
+        {
+            CRecipeCamera.instance.config.iniUpExposureTime = (int)txtUpExposureTime.Value;
+            try
+            {
+                HOperatorSet.SetFramegrabberParam(G.FormMain.AcqHandle, "ExposureTime", CRecipeCamera.instance.config.iniUpExposureTime);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void panel11_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void trackDay_Scroll(object sender, EventArgs e)
+        {
+
         }
     }
 }

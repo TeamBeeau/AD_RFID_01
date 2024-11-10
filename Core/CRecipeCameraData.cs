@@ -1,3 +1,4 @@
+using System.Windows.Forms;
 using System.Xml.Serialization;
 
 namespace Core
@@ -5,6 +6,7 @@ namespace Core
 
 	public class CRecipeCameraData
 	{
+		
 		private int Threshold_ = 1;
 
 		private int Threshold1_ = 1;

@@ -26,18 +26,22 @@ namespace Core
         
         public static CImage instance => _ints;
 		public int IniImage(string strCameraPort, string strCameraType)
-		{
-	
-			try
+        {
+            HTuple parameterNames;
+
+            try
 			{
 				AcqHandle1.OpenFramegrabber(strCameraPort, 0, 0, 0, 0, 0, 0, "progressive", -1, "default", -1.0, "false", "default", strCameraType, 0, -1);
-				HOperatorSet.SetFramegrabberParam(AcqHandle1, "ExposureTime", CRecipeCamera.instance.config.iniUpExposureTime);
+               
+               
+               // //HOperatorSet.SetFramegrabberParam(AcqHandle1, "ExposureTimeRaw", 490);
+                HOperatorSet.SetFramegrabberParam(AcqHandle1, "ExposureTime",  CRecipeCamera.instance.config.iniUpExposureTime);
 				HOperatorSet.SetFramegrabberParam(AcqHandle1, "Gain", CRecipeCamera.instance.config.iniUpCameraGain);
 			}
-			catch (Exception)
+			catch (Exception ex)
 			{
 				G.FormMain.lbCam.Text = "Camera Disconnected";
-				//MessageBox.Show("UpCamera initializtion fail！");
+				MessageBox.Show(ex.Message);
 				return 0;
 			}
             G.FormMain.lbCam.Text = "Camera Connected";

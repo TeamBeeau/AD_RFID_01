@@ -36,26 +36,33 @@ namespace AD_RFID
             this.panel1 = new System.Windows.Forms.Panel();
             this.panel12 = new System.Windows.Forms.Panel();
             this.panel15 = new System.Windows.Forms.Panel();
-            this.panel37 = new System.Windows.Forms.Panel();
             this.panel7 = new System.Windows.Forms.Panel();
             this.btnSaveAs = new System.Windows.Forms.Button();
             this.btnLoadProjectModel = new System.Windows.Forms.Button();
             this.lbPN = new System.Windows.Forms.Label();
             this.txtProjectNo = new System.Windows.Forms.TextBox();
+            this.panel37 = new System.Windows.Forms.Panel();
+            this.btnTrain = new System.Windows.Forms.Button();
             this.lbNT = new System.Windows.Forms.Label();
             this.panel38 = new System.Windows.Forms.Panel();
             this.BtnRun = new System.Windows.Forms.Button();
             this.panel24 = new System.Windows.Forms.Panel();
             this.btnLang = new System.Windows.Forms.Button();
-            this.btnADM = new System.Windows.Forms.Button();
+            this.btnReport = new System.Windows.Forms.Button();
             this.btnHelp = new System.Windows.Forms.Button();
             this.btnSet = new System.Windows.Forms.Button();
             this.pModel = new System.Windows.Forms.Panel();
             this.panel6 = new System.Windows.Forms.Panel();
-            this.panel36 = new System.Windows.Forms.Panel();
+            this.pView = new System.Windows.Forms.Panel();
             this.view = new System.Windows.Forms.Panel();
             this.pControl = new System.Windows.Forms.Panel();
+            this.btnWebCam = new System.Windows.Forms.Button();
+            this.panel21 = new System.Windows.Forms.Panel();
+            this.chkShowEable = new AD_RFID.RJButton();
+            this.panel3 = new System.Windows.Forms.Panel();
+            this.btnKich = new System.Windows.Forms.Button();
             this.btnFolder = new System.Windows.Forms.Button();
+            this.btnSimulation = new System.Windows.Forms.Button();
             this.panel18 = new System.Windows.Forms.Panel();
             this.btnSaveImage = new System.Windows.Forms.Button();
             this.panel16 = new System.Windows.Forms.Panel();
@@ -65,6 +72,7 @@ namespace AD_RFID
             this.panel10 = new System.Windows.Forms.Panel();
             this.panel5 = new System.Windows.Forms.Panel();
             this.panel2 = new System.Windows.Forms.Panel();
+            this.btnReset = new System.Windows.Forms.Button();
             this.panel57 = new System.Windows.Forms.Panel();
             this.txtDoubleNum = new System.Windows.Forms.Label();
             this.label35 = new System.Windows.Forms.Label();
@@ -96,6 +104,9 @@ namespace AD_RFID
             this.panel17 = new System.Windows.Forms.Panel();
             this.btnSelectZoomRegion = new System.Windows.Forms.Button();
             this.panel8 = new System.Windows.Forms.Panel();
+            this.txtPO = new System.Windows.Forms.ComboBox();
+            this.btnDelete = new System.Windows.Forms.Button();
+            this.label2 = new System.Windows.Forms.Label();
             this.lbNoti = new System.Windows.Forms.Label();
             this.panel13 = new System.Windows.Forms.Panel();
             this.lbOK = new System.Windows.Forms.Label();
@@ -113,16 +124,19 @@ namespace AD_RFID
             this.txtDealWithTime = new System.Windows.Forms.ToolStripStatusLabel();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
+            this.tmTrain = new System.Windows.Forms.Timer(this.components);
+            this.tmMouseRightDown = new System.Windows.Forms.Timer(this.components);
+            this.workWebCam = new System.ComponentModel.BackgroundWorker();
             this.panel1.SuspendLayout();
             this.panel12.SuspendLayout();
             this.panel15.SuspendLayout();
-            this.panel37.SuspendLayout();
             this.panel7.SuspendLayout();
+            this.panel37.SuspendLayout();
             this.panel38.SuspendLayout();
             this.panel24.SuspendLayout();
             this.pModel.SuspendLayout();
             this.panel6.SuspendLayout();
-            this.panel36.SuspendLayout();
+            this.pView.SuspendLayout();
             this.pControl.SuspendLayout();
             this.panel5.SuspendLayout();
             this.panel2.SuspendLayout();
@@ -161,17 +175,10 @@ namespace AD_RFID
             // panel15
             // 
             this.panel15.BackColor = System.Drawing.Color.Transparent;
+            this.panel15.Controls.Add(this.panel7);
             this.panel15.Controls.Add(this.panel37);
             resources.ApplyResources(this.panel15, "panel15");
             this.panel15.Name = "panel15";
-            // 
-            // panel37
-            // 
-            this.panel37.Controls.Add(this.panel7);
-            this.panel37.Controls.Add(this.lbNT);
-            this.panel37.Controls.Add(this.panel38);
-            resources.ApplyResources(this.panel37, "panel37");
-            this.panel37.Name = "panel37";
             // 
             // panel7
             // 
@@ -213,8 +220,28 @@ namespace AD_RFID
             resources.ApplyResources(this.txtProjectNo, "txtProjectNo");
             this.txtProjectNo.Name = "txtProjectNo";
             // 
+            // panel37
+            // 
+            this.panel37.Controls.Add(this.btnTrain);
+            this.panel37.Controls.Add(this.lbNT);
+            this.panel37.Controls.Add(this.panel38);
+            resources.ApplyResources(this.panel37, "panel37");
+            this.panel37.Name = "panel37";
+            // 
+            // btnTrain
+            // 
+            this.btnTrain.BackColor = System.Drawing.Color.Transparent;
+            resources.ApplyResources(this.btnTrain, "btnTrain");
+            this.btnTrain.ForeColor = System.Drawing.Color.Black;
+            this.btnTrain.Image = global::AD_RFID.Properties.Resources.icons8_click_40;
+            this.btnTrain.Name = "btnTrain";
+            this.btnTrain.UseVisualStyleBackColor = false;
+            this.btnTrain.Click += new System.EventHandler(this.btnTrain_Click);
+            // 
             // lbNT
             // 
+            this.lbNT.BackColor = System.Drawing.Color.Silver;
+            this.lbNT.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             resources.ApplyResources(this.lbNT, "lbNT");
             this.lbNT.ForeColor = System.Drawing.Color.White;
             this.lbNT.Name = "lbNT";
@@ -227,9 +254,9 @@ namespace AD_RFID
             // 
             // BtnRun
             // 
-            this.BtnRun.BackColor = System.Drawing.Color.Green;
+            this.BtnRun.BackColor = System.Drawing.SystemColors.Control;
             resources.ApplyResources(this.BtnRun, "BtnRun");
-            this.BtnRun.ForeColor = System.Drawing.Color.White;
+            this.BtnRun.ForeColor = System.Drawing.Color.Green;
             this.BtnRun.Name = "BtnRun";
             this.BtnRun.UseVisualStyleBackColor = false;
             this.BtnRun.Click += new System.EventHandler(this.BtnRun_Click);
@@ -237,7 +264,7 @@ namespace AD_RFID
             // panel24
             // 
             this.panel24.Controls.Add(this.btnLang);
-            this.panel24.Controls.Add(this.btnADM);
+            this.panel24.Controls.Add(this.btnReport);
             this.panel24.Controls.Add(this.btnHelp);
             this.panel24.Controls.Add(this.btnSet);
             resources.ApplyResources(this.panel24, "panel24");
@@ -253,14 +280,15 @@ namespace AD_RFID
             this.btnLang.UseVisualStyleBackColor = false;
             this.btnLang.Click += new System.EventHandler(this.btnLang_Click);
             // 
-            // btnADM
+            // btnReport
             // 
-            this.btnADM.BackColor = System.Drawing.SystemColors.Control;
-            resources.ApplyResources(this.btnADM, "btnADM");
-            this.btnADM.ForeColor = System.Drawing.Color.Black;
-            this.btnADM.Image = global::AD_RFID.Properties.Resources.icons8_admin_48;
-            this.btnADM.Name = "btnADM";
-            this.btnADM.UseVisualStyleBackColor = false;
+            this.btnReport.BackColor = System.Drawing.SystemColors.Control;
+            resources.ApplyResources(this.btnReport, "btnReport");
+            this.btnReport.ForeColor = System.Drawing.Color.Black;
+            this.btnReport.Image = global::AD_RFID.Properties.Resources.icons8_admin_48;
+            this.btnReport.Name = "btnReport";
+            this.btnReport.UseVisualStyleBackColor = false;
+            this.btnReport.Click += new System.EventHandler(this.btnReport_Click);
             // 
             // btnHelp
             // 
@@ -292,26 +320,33 @@ namespace AD_RFID
             // 
             // panel6
             // 
-            this.panel6.Controls.Add(this.panel36);
+            this.panel6.Controls.Add(this.pView);
             this.panel6.Controls.Add(this.pControl);
             resources.ApplyResources(this.panel6, "panel6");
             this.panel6.Name = "panel6";
             // 
-            // panel36
+            // pView
             // 
-            this.panel36.Controls.Add(this.view);
-            resources.ApplyResources(this.panel36, "panel36");
-            this.panel36.Name = "panel36";
+            this.pView.Controls.Add(this.view);
+            resources.ApplyResources(this.pView, "pView");
+            this.pView.Name = "pView";
             // 
             // view
             // 
             resources.ApplyResources(this.view, "view");
             this.view.Name = "view";
+            this.view.Paint += new System.Windows.Forms.PaintEventHandler(this.view_Paint);
             // 
             // pControl
             // 
             this.pControl.BackColor = System.Drawing.Color.LightSlateGray;
+            this.pControl.Controls.Add(this.btnWebCam);
+            this.pControl.Controls.Add(this.panel21);
+            this.pControl.Controls.Add(this.chkShowEable);
+            this.pControl.Controls.Add(this.panel3);
+            this.pControl.Controls.Add(this.btnKich);
             this.pControl.Controls.Add(this.btnFolder);
+            this.pControl.Controls.Add(this.btnSimulation);
             this.pControl.Controls.Add(this.panel18);
             this.pControl.Controls.Add(this.btnSaveImage);
             this.pControl.Controls.Add(this.panel16);
@@ -322,6 +357,52 @@ namespace AD_RFID
             resources.ApplyResources(this.pControl, "pControl");
             this.pControl.Name = "pControl";
             // 
+            // btnWebCam
+            // 
+            this.btnWebCam.BackColor = System.Drawing.Color.Transparent;
+            resources.ApplyResources(this.btnWebCam, "btnWebCam");
+            this.btnWebCam.ForeColor = System.Drawing.Color.Black;
+            this.btnWebCam.Image = global::AD_RFID.Properties.Resources.icons8_camera_50__1_;
+            this.btnWebCam.Name = "btnWebCam";
+            this.btnWebCam.UseVisualStyleBackColor = false;
+            this.btnWebCam.Click += new System.EventHandler(this.btnWebCam_Click);
+            // 
+            // panel21
+            // 
+            resources.ApplyResources(this.panel21, "panel21");
+            this.panel21.Name = "panel21";
+            // 
+            // chkShowEable
+            // 
+            this.chkShowEable.BackColor = System.Drawing.Color.Transparent;
+            this.chkShowEable.BackgroundColor = System.Drawing.Color.Transparent;
+            resources.ApplyResources(this.chkShowEable, "chkShowEable");
+            this.chkShowEable.BorderColor = System.Drawing.Color.Silver;
+            this.chkShowEable.BorderRadius = 0;
+            this.chkShowEable.BorderSize = 0;
+            this.chkShowEable.FlatAppearance.BorderSize = 0;
+            this.chkShowEable.ForeColor = System.Drawing.Color.Black;
+            this.chkShowEable.IsCLick = false;
+            this.chkShowEable.IsNotChange = false;
+            this.chkShowEable.IsRect = false;
+            this.chkShowEable.IsUnGroup = true;
+            this.chkShowEable.Name = "chkShowEable";
+            this.chkShowEable.TextColor = System.Drawing.Color.Black;
+            this.chkShowEable.UseVisualStyleBackColor = false;
+            this.chkShowEable.Click += new System.EventHandler(this.chkShowEable_Click);
+            // 
+            // panel3
+            // 
+            resources.ApplyResources(this.panel3, "panel3");
+            this.panel3.Name = "panel3";
+            // 
+            // btnKich
+            // 
+            resources.ApplyResources(this.btnKich, "btnKich");
+            this.btnKich.Name = "btnKich";
+            this.btnKich.UseVisualStyleBackColor = true;
+            this.btnKich.Click += new System.EventHandler(this.btnKich_Click);
+            // 
             // btnFolder
             // 
             this.btnFolder.BackColor = System.Drawing.Color.Transparent;
@@ -331,6 +412,13 @@ namespace AD_RFID
             this.btnFolder.Name = "btnFolder";
             this.btnFolder.UseVisualStyleBackColor = false;
             this.btnFolder.Click += new System.EventHandler(this.btnFolder_Click);
+            // 
+            // btnSimulation
+            // 
+            resources.ApplyResources(this.btnSimulation, "btnSimulation");
+            this.btnSimulation.Name = "btnSimulation";
+            this.btnSimulation.UseVisualStyleBackColor = true;
+            this.btnSimulation.Click += new System.EventHandler(this.button1_Click);
             // 
             // panel18
             // 
@@ -391,6 +479,7 @@ namespace AD_RFID
             // 
             // panel2
             // 
+            this.panel2.Controls.Add(this.btnReset);
             this.panel2.Controls.Add(this.panel57);
             this.panel2.Controls.Add(this.panel23);
             this.panel2.Controls.Add(this.panel19);
@@ -405,6 +494,13 @@ namespace AD_RFID
             this.panel2.Controls.Add(this.txtboxHistory);
             resources.ApplyResources(this.panel2, "panel2");
             this.panel2.Name = "panel2";
+            // 
+            // btnReset
+            // 
+            resources.ApplyResources(this.btnReset, "btnReset");
+            this.btnReset.Name = "btnReset";
+            this.btnReset.UseVisualStyleBackColor = true;
+            this.btnReset.Click += new System.EventHandler(this.btnReset_Click);
             // 
             // panel57
             // 
@@ -501,6 +597,8 @@ namespace AD_RFID
             // 
             // txtReject
             // 
+            this.txtReject.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.txtReject.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             resources.ApplyResources(this.txtReject, "txtReject");
             this.txtReject.ForeColor = System.Drawing.Color.Red;
             this.txtReject.Name = "txtReject";
@@ -513,6 +611,8 @@ namespace AD_RFID
             // 
             // txtyield
             // 
+            this.txtyield.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.txtyield.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             resources.ApplyResources(this.txtyield, "txtyield");
             this.txtyield.ForeColor = System.Drawing.Color.Green;
             this.txtyield.Name = "txtyield";
@@ -631,10 +731,35 @@ namespace AD_RFID
             // 
             // panel8
             // 
+            this.panel8.Controls.Add(this.txtPO);
+            this.panel8.Controls.Add(this.btnDelete);
+            this.panel8.Controls.Add(this.label2);
             this.panel8.Controls.Add(this.lbNoti);
             this.panel8.Controls.Add(this.panel13);
             resources.ApplyResources(this.panel8, "panel8");
             this.panel8.Name = "panel8";
+            // 
+            // txtPO
+            // 
+            resources.ApplyResources(this.txtPO, "txtPO");
+            this.txtPO.FormattingEnabled = true;
+            this.txtPO.Name = "txtPO";
+            this.txtPO.SelectedIndexChanged += new System.EventHandler(this.txtPO_SelectedIndexChanged);
+            this.txtPO.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtPO_KeyDown);
+            // 
+            // btnDelete
+            // 
+            resources.ApplyResources(this.btnDelete, "btnDelete");
+            this.btnDelete.ForeColor = System.Drawing.Color.Red;
+            this.btnDelete.Name = "btnDelete";
+            this.btnDelete.UseVisualStyleBackColor = true;
+            this.btnDelete.Click += new System.EventHandler(this.btnEnter_Click);
+            // 
+            // label2
+            // 
+            resources.ApplyResources(this.label2, "label2");
+            this.label2.ForeColor = System.Drawing.Color.Black;
+            this.label2.Name = "label2";
             // 
             // lbNoti
             // 
@@ -737,6 +862,21 @@ namespace AD_RFID
             // 
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
+            // tmTrain
+            // 
+            this.tmTrain.Tick += new System.EventHandler(this.tmTrain_Tick);
+            // 
+            // tmMouseRightDown
+            // 
+            this.tmMouseRightDown.Tick += new System.EventHandler(this.tmMouseRightDown_Tick);
+            // 
+            // workWebCam
+            // 
+            this.workWebCam.WorkerReportsProgress = true;
+            this.workWebCam.WorkerSupportsCancellation = true;
+            this.workWebCam.DoWork += new System.ComponentModel.DoWorkEventHandler(this.workWebCam_DoWork);
+            this.workWebCam.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.workWebCam_RunWorkerCompleted);
+            // 
             // FormMain
             // 
             resources.ApplyResources(this, "$this");
@@ -748,18 +888,19 @@ namespace AD_RFID
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.FormMain_FormClosed);
             this.Load += new System.EventHandler(this.FormMain_Load);
             this.Shown += new System.EventHandler(this.FormMain_Shown);
+            this.SizeChanged += new System.EventHandler(this.FormMain_SizeChanged);
             this.panel1.ResumeLayout(false);
             this.panel12.ResumeLayout(false);
             this.panel15.ResumeLayout(false);
-            this.panel37.ResumeLayout(false);
             this.panel7.ResumeLayout(false);
             this.panel7.PerformLayout();
+            this.panel37.ResumeLayout(false);
             this.panel38.ResumeLayout(false);
             this.panel24.ResumeLayout(false);
             this.pModel.ResumeLayout(false);
             this.pModel.PerformLayout();
             this.panel6.ResumeLayout(false);
-            this.panel36.ResumeLayout(false);
+            this.pView.ResumeLayout(false);
             this.pControl.ResumeLayout(false);
             this.panel5.ResumeLayout(false);
             this.panel2.ResumeLayout(false);
@@ -802,9 +943,9 @@ namespace AD_RFID
         private Button btnTrig;
         private Button btnLive;
         private System.Windows.Forms.Timer timer1;
-        private Panel panel36;
+        private Panel pView;
         private Panel panel24;
-        private Button btnADM;
+        private Button btnReport;
         private Button btnHelp;
         private Button btnSet;
         private Panel panel15;
@@ -872,5 +1013,19 @@ namespace AD_RFID
         private Label label1;
         private Button btnSaveAs;
         private System.ComponentModel.BackgroundWorker backgroundWorker1;
+        private Button btnSimulation;
+        private Button btnKich;
+        private Button btnTrain;
+        private Panel panel3;
+        private Timer tmTrain;
+        private Timer tmMouseRightDown;
+        private Button btnReset;
+        private RJButton chkShowEable;
+        private Label label2;
+        private Panel panel21;
+        private Button btnWebCam;
+        public System.ComponentModel.BackgroundWorker workWebCam;
+        private Button btnDelete;
+        private ComboBox txtPO;
     }
 }
