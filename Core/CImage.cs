@@ -35,13 +35,13 @@ namespace Core
                
                
                // //HOperatorSet.SetFramegrabberParam(AcqHandle1, "ExposureTimeRaw", 490);
-                HOperatorSet.SetFramegrabberParam(AcqHandle1, "ExposureTime",  CRecipeCamera.instance.config.iniUpExposureTime);
-				HOperatorSet.SetFramegrabberParam(AcqHandle1, "Gain", CRecipeCamera.instance.config.iniUpCameraGain);
+              //  HOperatorSet.SetFramegrabberParam(AcqHandle1, "ExposureTime",  CRecipeCamera.instance.config.iniUpExposureTime);
+				//HOperatorSet.SetFramegrabberParam(AcqHandle1, "Gain", CRecipeCamera.instance.config.iniUpCameraGain);
 			}
 			catch (Exception ex)
 			{
 				G.FormMain.lbCam.Text = "Camera Disconnected";
-				MessageBox.Show(ex.Message);
+				MessageBox.Show("Camera Disconnected");
 				return 0;
 			}
             G.FormMain.lbCam.Text = "Camera Connected";

@@ -34,6 +34,9 @@ using System.Data.SqlClient;
 using System.Data;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 using System.Net.NetworkInformation;
+using System.Management;
+using System.Web.Configuration;
+using System.Runtime.CompilerServices;
 
 
 namespace AD_RFID
@@ -670,7 +673,7 @@ namespace AD_RFID
 
         // }
 
-        public bool CreateMarkRegion(HTuple hv_WindowID)
+        public bool CreateMarkRegion(HTuple hv_WindowID,string Path)
         {
             HObject[] OTemp = new HObject[20];
             HObject ho_ALLMarkRegionAffineTrans = null;
@@ -749,10 +752,8 @@ namespace AD_RFID
             HOperatorSet.GenEmptyObj(out var ho_ContourB);
             HOperatorSet.GenEmptyObj(out var ho_ReduceImage);
             HOperatorSet.GenEmptyObj(out var ho_Threshold);
-            string szPath = Application.StartupPath + "\\Project\\UpCameraModel\\";
-            FolderBrowserDialog dialog = new FolderBrowserDialog();
-            dialog.Description = "please select folder";
-            dialog.SelectedPath = szPath;
+            string szPath = Application.StartupPath + "\\Project\\UpCameraModel\\"+Path;
+          
 
 
 
@@ -760,14 +761,13 @@ namespace AD_RFID
             string ModelPath = "";
             string ModelRegionPath = "";
             string modelImagePath = "";
-            if (dialog.ShowDialog() == DialogResult.OK)
-            {
+            String pathProject = "";
                 try
                 {
-                    foldPath = dialog.SelectedPath;
+                    foldPath = szPath;
                     int delectLength = foldPath.Length - szPath.Length;
                     int needLength = foldPath.Length - delectLength;
-                    txtProjectNo.Text = foldPath.Substring(needLength, delectLength);
+                pathProject = foldPath+"\\";//.Substring(needLength, delectLength);
                     ModelPath = foldPath + "\\Model.shm";
                     ModelRegionPath = foldPath + "\\ModelRegion.reg";
                     modelImagePath = foldPath + "\\ModelImage.bmp";
@@ -783,14 +783,14 @@ namespace AD_RFID
                 CRecipeCamera.instance.LoadConfig("SystemConfig.xml");
                 HTuple hvMatchValue = CRecipeCamera.instance.config.iniMatchValue;
                 HTuple hvThreshold = CRecipeCamera.instance.config.iniThresholdValue;
-                CRecipeCamera.instance.config.iniProjectNO = txtProjectNo.Text.ToString();
+                CRecipeCamera.instance.config.iniProjectNO = pathProject;
                 CRecipeCamera.instance.SaveConfig("SystemConfig.xml");
-                string strFileName2 = txtProjectNo.Text + "CameraConfig.xml";
+            string strFileName2 =  Path + "CameraConfig.xml";
 
-                strFileNameSA = strFileName2;//note
+            strFileNameSA = strFileName2;//note
 
-                CRecipeCamera.instance.LoadConfig(strFileName2);
-                G.Setting.txtUpCameraTime.Text = Convert.ToString(CRecipeCamera.instance.config.iniUpCameraTime);
+            CRecipeCamera.instance.LoadConfig(strFileName2);
+            G.Setting.txtUpCameraTime.Text = Convert.ToString(CRecipeCamera.instance.config.iniUpCameraTime);
                 G.Setting.txtUpExposureTime.Text = Convert.ToString(CRecipeCamera.instance.config.iniUpExposureTime);
                 G.Setting.txtUpCameraGain.Text = Convert.ToString(CRecipeCamera.instance.config.iniUpCameraGain);
              //   G.Setting.txtDelaySendTime.Text = Convert.ToString(CRecipeCamera.instance.config.iniDelaySendTime);
@@ -800,25 +800,25 @@ namespace AD_RFID
                 {
                     HOperatorSet.SetFramegrabberParam(AcqHandle, "ExposureTime", exposureTime);
                     HOperatorSet.SetFramegrabberParam(AcqHandle, "Gain", UpCameraGain);
-                    if (CRecipeCamera.instance.config.hvDwCameraResRow > 10 && CRecipeCamera.instance.config.hvDwCameraResCol > 10)
-                    {
-                        // MessageBox.Show(CRecipeCamera.instance.config.hvDwCameraResCol+","+CRecipeCamera.instance.config.hvDwCameraResRow);
-                        HOperatorSet.SetFramegrabberParam(AcqHandle, "OffsetY", (int)0);
-                        HOperatorSet.SetFramegrabberParam(AcqHandle, "OffsetX", (int)0);
-                        HOperatorSet.SetFramegrabberParam(AcqHandle, "Height", (int)(CRecipeCamera.instance.config.hvDwCameraResRow));
-                        HOperatorSet.SetFramegrabberParam(AcqHandle, "Width", (int)(CRecipeCamera.instance.config.hvDwCameraResCol));
-                        HTuple MaxWidth = 0, MaxHeight = 0;
-                        HOperatorSet.GetFramegrabberParam(AcqHandle, "WidthMax", out MaxWidth);
-                        HOperatorSet.GetFramegrabberParam(AcqHandle, "HeightMax", out MaxHeight);
-                        HOperatorSet.SetFramegrabberParam(AcqHandle, "OffsetY", (int)((MaxHeight.I - CRecipeCamera.instance.config.hvDwCameraResRow) / 2));
-                        HOperatorSet.SetFramegrabberParam(AcqHandle, "OffsetX", (int)((MaxWidth.I - CRecipeCamera.instance.config.hvDwCameraResCol) / 2));
-                    }//horizontalResolution, int verticalResolution
+                    //if (CRecipeCamera.instance.config.hvDwCameraResRow > 10 && CRecipeCamera.instance.config.hvDwCameraResCol > 10)
+                    //{
+                    //    // MessageBox.Show(CRecipeCamera.instance.config.hvDwCameraResCol+","+CRecipeCamera.instance.config.hvDwCameraResRow);
+                    //    HOperatorSet.SetFramegrabberParam(AcqHandle, "OffsetY", (int)0);
+                    //    HOperatorSet.SetFramegrabberParam(AcqHandle, "OffsetX", (int)0);
+                    //    HOperatorSet.SetFramegrabberParam(AcqHandle, "Height", (int)(CRecipeCamera.instance.config.hvDwCameraResRow));
+                    //    HOperatorSet.SetFramegrabberParam(AcqHandle, "Width", (int)(CRecipeCamera.instance.config.hvDwCameraResCol));
+                    //    HTuple MaxWidth = 0, MaxHeight = 0;
+                    //    HOperatorSet.GetFramegrabberParam(AcqHandle, "WidthMax", out MaxWidth);
+                    //    HOperatorSet.GetFramegrabberParam(AcqHandle, "HeightMax", out MaxHeight);
+                    //    HOperatorSet.SetFramegrabberParam(AcqHandle, "OffsetY", (int)((MaxHeight.I - CRecipeCamera.instance.config.hvDwCameraResRow) / 2));
+                    //    HOperatorSet.SetFramegrabberParam(AcqHandle, "OffsetX", (int)((MaxWidth.I - CRecipeCamera.instance.config.hvDwCameraResCol) / 2));
+                    //}//horizontalResolution, int verticalResolution
 
 
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message);
+                    MessageBox.Show("Set Para Camera Error");
                 }
                 if (!bUnEnbleDownCamera)
                 {
@@ -965,7 +965,7 @@ namespace AD_RFID
                     MessageBox.Show("Error:Load project fail ！");
                     return false;
                 }
-            }
+            
             MessageBox.Show("please select project file !");
             return false;
         }
@@ -1189,7 +1189,28 @@ namespace AD_RFID
             G.Setting.cmbSaveNgDay.SelectedIndex = CRecipeCamera.instance.config.iniSaveNGDayCmbIndex;
             nStartSaveDay = CRecipeCamera.instance.config.iniStartSaveDay;
             nStartSaveMonth = CRecipeCamera.instance.config.iniStartSaveMonth;
-            txtProjectNo.Text = CRecipeCamera.instance.config.iniProjectNO;
+            if (!Directory.Exists("Project"))
+            {
+                Directory.CreateDirectory("Project");
+            }
+            IsLoad = true;
+            G.listProgram.Items.Clear();
+                // Access.SaveProg("Program\\Default.prog", new List<PropetyTool>());
+                string[] subDirectories = Directory.GetDirectories("Project\\UpCameraModel");
+            List<String> names = new List<string>();
+            foreach (string subDirectory in subDirectories)
+                {
+                names.Add ( Path.GetFileName(subDirectory));
+                // Chỉ lấy tên của thư mục mà không lấy đường dẫn đầy đủ
+              
+                }
+            items = names;
+            G.listProgram.DataSource = names;
+
+          //  G.listProgram.DataSource = subDirectories;
+            
+
+             //   txtProjectNo.Text = CRecipeCamera.instance.config.iniProjectNO;
             G.Setting.txtUpOffset.Text = Convert.ToString(CRecipeCamera.instance.config.iniUpOffset);
             G.Setting.txtDownOffset.Text = Convert.ToString(CRecipeCamera.instance.config.iniDownOffset);
             G.Setting.txtLeftOffset.Text = Convert.ToString(CRecipeCamera.instance.config.iniLeftOffset);
@@ -1206,12 +1227,35 @@ namespace AD_RFID
             CRecipeCamera.instance.LoadConfig(strFileName2);
             G.Setting.txtUpCameraTime.Text = Convert.ToString(CRecipeCamera.instance.config.iniUpCameraTime);
             G.Setting.txtUpExposureTime.Value =CRecipeCamera.instance.config.iniUpExposureTime;
-            G.Setting.txtUpCameraGain.Value =(int) CRecipeCamera.instance.config.iniUpCameraGain;
-            G.Setting.trackWidth.Value = (int)CRecipeCamera.instance.config.hvUpCameraResCol;
-            G.Setting.trackHeight.Value = (int)CRecipeCamera.instance.config.hvUpCameraResRow;
-            G.Setting.trackOffSetX.Value = (int)CRecipeCamera.instance.config.hvUpROI_COL1;
-            G.Setting.trackOffSetY.Value = (int)CRecipeCamera.instance.config.hvUpROI_ROW1;
-            //   G.Setting.txtDelaySendTime.Text = Convert.ToString(CRecipeCamera.instance.config.iniDelaySendTime);
+            if (CRecipeCamera.instance.config.iniUpCameraGain <(double) G.Setting.txtUpCameraGain.Minimum)
+                G.Setting.txtUpCameraGain.Value = G.Setting.txtUpCameraGain.Minimum;
+            else
+           G.Setting.txtUpCameraGain.Value =(int) CRecipeCamera.instance.config.iniUpCameraGain;
+            int MaxHeight=0, MaxWidth=0;
+            //try
+            //{
+
+            //    HTuple MaxW = 0, MaxH = 0;
+            //    HOperatorSet.GetFramegrabberParam(G.FormMain.AcqHandle, "WidthMax", out MaxW);
+            //    HOperatorSet.GetFramegrabberParam(G.FormMain.AcqHandle, "HeightMax", out MaxH);
+            //    MaxHeight = MaxH;
+            //    MaxWidth = MaxW;
+            //}
+            //catch (Exception ex)
+            //{
+
+            //}
+            //trackWidth.Maximum = MaxWidth;
+            //trackHeight.Maximum = MaxHeight;
+          
+            //G.Setting.trackWidth.Maximum = (int)MaxWidth ;
+            //G.Setting.trackHeight.Maximum = (int)MaxHeight ;
+
+            //G.Setting.trackWidth.Value = (int)CRecipeCamera.instance.config.hvUpCameraResCol;
+            //G.Setting.trackHeight.Value = (int)CRecipeCamera.instance.config.hvUpCameraResRow;
+            //G.Setting.trackOffSetX.Value = (int)CRecipeCamera.instance.config.hvUpROI_COL1;
+            //G.Setting.trackOffSetY.Value = (int)CRecipeCamera.instance.config.hvUpROI_ROW1;
+            ////   G.Setting.txtDelaySendTime.Text = Convert.ToString(CRecipeCamera.instance.config.iniDelaySendTime);
             try
             {
                 DataTable dt = G.Server.Table("PO", "PO", "", G.cnnPO, " ORDER BY Date DESC");
@@ -1228,8 +1272,18 @@ namespace AD_RFID
             }
 
         }
+        bool IsLoad = false;
         private void FormMain_Load(object sender, EventArgs e)
         {
+            G.listProgram.Font = new Font("Arial", 18);
+            G.listProgram.Parent = this;
+            G.listProgram.BringToFront();
+            G.listProgram.Visible = false;
+            G.listProgram.Location = new Point(this.Location.X + pPro.Location.X + txtProjectNo.Location.X+10, this.Location.Y + txtProjectNo.Location.Y + txtProjectNo.Height + 10);
+            G.listProgram.Width = txtProjectNo.Width;
+            G.listProgram.SelectedValueChanged += ListProgram_SelectedIndexChanged;
+
+
             m_dev = DASK.Register_Card(6, 0);
             if (m_dev < 0)
             {
@@ -1268,8 +1322,36 @@ namespace AD_RFID
 
             // BlockNGCon();
         }
+        String NameProject = "";
+        private void ListProgram_SelectedIndexChanged(object sender, EventArgs e)
+        {
+              if (IsLoad)
+            {
+                IsLoad = false;
+                return;
+            }
+            NameProject = G.listProgram.SelectedValue.ToString();
+
+            if (hWindow != null)
+            {
+                if (CreateMarkRegion(hWindow, NameProject))
+                {
+                    bModelIsOK = true;
+                    txtProjectNo.Text = NameProject;
+                }
+                else
+                {
+                    txtProjectNo.Text = NameProject;
+                    MessageBox.Show("ERROR:load model fail！");
+                }
+            }
+            G.listProgram.Visible = false;
+        }
+
         private void FormMain_FormClosed(object sender, FormClosedEventArgs e)
         {
+
+          
             G.cnn.Close();
             G.cnnPO.Close();
             if (threadUpCamera != null)
@@ -1313,6 +1395,13 @@ namespace AD_RFID
                     MessageBox.Show("DO_WritePort error!");
                 }
             }
+            this.Invoke((MethodInvoker)delegate
+            {
+                G.FormLoad.Close();
+                if(G.FormActive!=null)
+                G.FormActive.Close();
+            });
+           
         }
 
         private void btnCreateMarkModel_Click(object sender, EventArgs e)
@@ -1667,17 +1756,18 @@ namespace AD_RFID
 
         private void btnLoadProjectModel_Click_1(object sender, EventArgs e)
         {
-            if (hWindow != null)
+            G.listProgram.Visible = !G.listProgram.Visible;
+            if (G.listProgram.Visible)
             {
-                if (CreateMarkRegion(hWindow))
-                {
-                    bModelIsOK = true;
-                }
-                else
-                {
-                    MessageBox.Show("ERROR:load model fail！");
-                }
+                IsLoad = true;
+                G.listProgram.DataSource = items;
+
             }
+
+           this.ActiveControl = txtProjectNo;
+            txtProjectNo.Focus();
+            txtProjectNo.SelectAll();
+
         }
 
         private void btnLive_Click(object sender, EventArgs e)
@@ -1946,14 +2036,14 @@ namespace AD_RFID
                     File.Copy(@"Report\Default.mdf", nameFileSQL);
                     File.Exists(@"Report\Default.mdf");
                 }
-                //Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=D:\ChiTu\Codes\BeeIV2\bin\Release\Report\Default.mdf;Integrated Security=True;Connect Timeout=30
+                //Data Source=(LocalDB)\V11.0;AttachDbFilename=D:\ChiTu\Codes\BeeIV2\bin\Release\Report\Default.mdf;Integrated Security=True;Connect Timeout=30
                 String path = Path.Combine(Environment.CurrentDirectory, nameFileSQL);
-                G._pathSqlMaster = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=" + path + ";Integrated Security=True;Connect Timeout=30"; ;
+                G._pathSqlMaster = @"Data Source=(LocalDB)\V11.0;AttachDbFilename=" + path + ";Integrated Security=True;Connect Timeout=30"; ;
                 G.cnn = new SqlConnection(G._pathSqlMaster);
                 // G.cnn.Close();
                 G.cnn.Open();
                 String pathPO = Path.Combine(Environment.CurrentDirectory, @"Report\PO.mdf");
-                String dbPO = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=" + pathPO + ";Integrated Security=True;Connect Timeout=30"; ;
+                String dbPO = @"Data Source=(LocalDB)\V11.0;AttachDbFilename=" + pathPO + ";Integrated Security=True;Connect Timeout=30"; ;
                 G.cnnPO = new SqlConnection(dbPO);
                 // G.cnn.Close();
                 G.cnnPO.Open();
@@ -2039,12 +2129,13 @@ namespace AD_RFID
                     command.Connection = G.cnn;
                     command.Prepare();
                     //command.CommandText = "INSERT into Report (Date,PO,Status,Total,Status,Raw,Result) VALUES(@Date,@Model,@Qty,@Total,@Status,@Raw,@Result)";
-                    command.CommandText = "INSERT into Report (Date,PO,Status,Raw,OK,NG) VALUES(@Date,@PO,@Status,@Raw,@OK,@NG)";
+                    command.CommandText = "INSERT into Report (Date,PO,Status,Raw,OK,NG,Model) VALUES(@Date,@PO,@Status,@Raw,@OK,@NG,@Model)";
 
                     command.Parameters.Add("@Date", SqlDbType.DateTime).Value = DateTime.Now;             // 1
                     command.Parameters.AddWithValue("@PO", PO);                                             // 2                                                                                                      //  command.Parameters.Add("@Time", MySqlDbType.DateTime).Value = DateTime.Now;             // 3
-                                                                                                            // command.Parameters.Add("@Qty", SqlDbType.Int).Value = Qty;                                             // 4
-                                                                                                            //command.Parameters.Add("@Total", SqlDbType.Int).Value = Total;                                        // 5
+                    command.Parameters.AddWithValue("@Model", txtProjectNo.Text.Trim());
+                    // command.Parameters.Add("@Qty", SqlDbType.Int).Value = Qty;                                             // 4
+                    //command.Parameters.Add("@Total", SqlDbType.Int).Value = Total;                                        // 5
                     command.Parameters.AddWithValue("@Status", Status);
 
                     command.Parameters.AddWithValue("@Raw", pathRaw + "//" + PO + "_" + Hour + ".png");// imageToByteArray(raw);         // 7
@@ -2085,10 +2176,11 @@ namespace AD_RFID
         {
             if (!G.Server.Check("*", "PO", "PO='" + txtPO.Text.Trim() + "'", G.cnnPO))
             {
+                
                 SqlCommand command = new SqlCommand();
                 command.Connection = G.cnnPO;
-                command.CommandText = "INSERT INTO PO (OK, NG,  Total, Miss, NGPosition, DoublePcs, PO,Date) " +
-                                      "VALUES ( @OK, @NG, @Total, @Miss, @NGPosition, @DoublePcs, @PO,@Date)";
+                command.CommandText = "INSERT INTO PO (OK, NG,  Total, Miss, NGPosition, DoublePcs, PO,Model,Date) " +
+                                      "VALUES ( @OK, @NG, @Total, @Miss, @NGPosition, @DoublePcs, @PO,@Model,@Date)";
                 command.Parameters.AddWithValue("@OK", 0);
                 command.Parameters.AddWithValue("@NG", 0);
                 command.Parameters.AddWithValue("@Total", 0);
@@ -2097,15 +2189,17 @@ namespace AD_RFID
                 command.Parameters.AddWithValue("@DoublePcs", 0);
                 command.Parameters.AddWithValue("@Date", DateTime.Now);
                 command.Parameters.AddWithValue("@PO", txtPO.Text.Trim());
+                command.Parameters.AddWithValue("@Model", txtProjectNo.Text.Trim());
 
                 command.ExecuteNonQuery();
+                
             }
             else
             {
                 SqlCommand command = new SqlCommand();
                 command.Connection = G.cnnPO;
                 command.Prepare();
-                command.CommandText = "UPDATE  PO SET OK='" + PerOK + "' , NG='" + PerNg + "' , Total='" + iAllNum + "' , NGPosition='" + iOffsetPosNum + "',DoublePcs=' " + iDoubleNum + "',PO='" + PO + "'";
+                command.CommandText = "UPDATE  PO SET OK='" + (int)PerOK + "' , NG='" + (int)PerNg + "' , Total='" + (int)iAllNum + "' , NGPosition='" + (int)iOffsetPosNum + "',DoublePcs=' " + (int)iDoubleNum + "' WHERE PO='" + PO + "'";
                 command.ExecuteNonQuery();
             }
          
@@ -4744,6 +4838,10 @@ namespace AD_RFID
 
         private void btnReset_Click(object sender, EventArgs e)
         {
+            if (MessageBox.Show("Bạn chắc chắn muốn Reset dữ liệu P/O này ?", "Sure", MessageBoxButtons.YesNo) == DialogResult.No)
+            {
+                return;
+            }
             iMissNum = 0;
             iAllNum = 0;
             iDoubleNum = 0;
@@ -4756,6 +4854,13 @@ namespace AD_RFID
             txtDoubleNum.Text = Convert.ToString(iDoubleNum);
             txtDealWithTime.Text = strDealTime;
             iUpCameraDelayGrabTime = Convert.ToInt32(G.Setting.txtUpCameraTime.Text.Trim());
+            SqlCommand command = new SqlCommand();
+            command.Connection = G.cnnPO;
+            command.Prepare();
+            command.CommandText = "UPDATE  PO SET OK='" + 0 + "' , NG='" +0 + "' , Total='" +0+ "' , NGPosition='" + 0+ "',DoublePcs=' " +0+ "' WHERE PO='" + PO + "'";
+            command.ExecuteNonQuery();
+            G.Server.Delete("Report", "PO='" + txtPO.Text.Trim() + "'", G.cnn);
+
         }
 
         private void btnReport_Click(object sender, EventArgs e)
@@ -4812,11 +4917,12 @@ namespace AD_RFID
         }
 
         private void txtPO_SelectedIndexChanged(object sender, EventArgs e)
-        {
+        {if (txtPO.SelectedIndex == -1) return;
             DataTable dt = new DataTable();
             string item = txtPO.SelectedItem.ToString();
-            if (G.Server.Check("*", "PO", $"PO='{item}'", G.cnnPO))
+            if (G.Server.Check("*", "PO", "PO='"+item+"'", G.cnnPO))
             {
+                PO = item;
                 dt = G.Server.Table(" OK,"+" NG,"+" Total,"+" Miss,"+" NGPosition,"+" DoublePcs", "PO", $"PO='{item}'", G.cnnPO, "");
 
 
@@ -4824,10 +4930,10 @@ namespace AD_RFID
                 {
                     txtyield.Text = row["OK"].ToString();
                     txtReject.Text = row["NG"].ToString();
-                    txtOKNum.Text = row["Total"].ToString();
-                    txtMissNum.Text = row["Miss"].ToString();
-                    txtOffsetPosNum.Text = row["NGPosition"].ToString();
-                    txtDoubleNum.Text = row["DoublePcs"].ToString();
+                    iAllNum = (int)row["Total"];
+                    iMissNum =(int) row["Miss"];
+                    iOffsetPosNum = (int)row["NGPosition"];
+                    iDoubleNum = (int)row["DoublePcs"];
               
                 }
             }
@@ -4861,39 +4967,153 @@ namespace AD_RFID
 
         private void txtPO_KeyDown(object sender, KeyEventArgs e)
         {
-            if(e.KeyCode==Keys.Enter)
+            if (e.KeyCode == Keys.Enter)
             {
-                SQL_PO();
-            }
-            try
-            {
-                DataTable dt = G.Server.Table("PO", "PO", "", G.cnnPO, " ORDER BY Date DESC");
-                if (dt.Rows.Count > 0)
+                if (txtProjectNo.Text.Trim() == "")
                 {
-                    var poList = dt.AsEnumerable().Select(row => row["PO"]).ToList();
-                    txtPO.DataSource = poList;
+                    MessageBox.Show("Vui lòng chọn Project!");
+                    return;
                 }
-            }
-            catch (Exception ex)
-            {
-                // Ghi lại ngoại lệ để dễ kiểm tra
-                Console.WriteLine(ex.Message);
+                SQL_PO();
+                PO = txtPO.Text.Trim();
+                MessageBox.Show("Đã tạo PO mới");
+                try
+                {
+                    DataTable dt = G.Server.Table("PO", "PO", "", G.cnnPO, " ORDER BY Date DESC");
+                    if (dt.Rows.Count > 0)
+                    {
+                        var poList = dt.AsEnumerable().Select(row => row["PO"]).ToList();
+                        txtPO.DataSource = poList;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Ghi lại ngoại lệ để dễ kiểm tra
+                    Console.WriteLine(ex.Message);
+                }
             }
         }
         public void SQL_DelectPO()
         {
-            string sqlTrunc = "TRUNCATE TABLE " + "PO";
-            SqlCommand cmd = new SqlCommand(sqlTrunc, G.cnnPO);
-            cmd.ExecuteNonQuery();
-            cmd.CommandText = (" DBCC CHECKIDENT('PO', RESEED,0)");
-            cmd.ExecuteNonQuery();
+            if(G.cnnPO.State==ConnectionState.Open)
+            {
+                
+                G.Server.Delete("PO", "PO='" + txtPO.Text.Trim() + "'", G.cnnPO);
+                G.Server.Delete("Report", "PO='" + txtPO.Text.Trim() + "'", G.cnn);
+            }    
+        
         }
+
+        private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
+        {
+           
+        }
+        bool IsInsert2, IsEnter, IsChangetext;
+        List<String> items = new List<String>();
+        bool IsKeyPress = false;
+        bool IsKeyEnter;
+
+        private void txtProjectNo_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                IsKeyEnter = true;
+                IsChangetext = false;
+                if (IsInsert2 == false)
+                {
+
+                  
+                    IsKeyPress = false;
+
+                    //    G.listProgram.SelectedIndex = 0;// G.listProgram.FindStringExact(sQrcode+".prog");
+                    if (listFilter.Count > 0)
+                    {
+                       
+                       NameProject= listFilter[0].ToString().Replace(".prog", "");
+                        if (CreateMarkRegion(hWindow, NameProject))
+                        {
+                            bModelIsOK = true;
+                            txtProjectNo.Text = NameProject;
+                        }
+                        else
+                        {
+                            txtProjectNo.Text = NameProject;
+                            MessageBox.Show("ERROR:load model fail！");
+                        }
+                        IsKeyEnter = false;
+
+                        G.listProgram.Visible = false;
+
+                    }
+                    else
+                    {
+                        IsKeyEnter = false;
+                    }
+                }
+
+            }
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnHelp_Click(object sender, EventArgs e)
+        {
+            Process.Start("UserManual.pdf");
+        }
+
+        List<String> listFilter = new List<string>();
+        private void txtProjectNo_TextChanged(object sender, EventArgs e)
+        {
+          G.listProgram.Visible = true;
+            if (IsKeyEnter) return;
+            // Lấy chuỗi tìm kiếm từ TextBox
+            string filter = txtProjectNo.Text.ToLower();
+
+            // Lọc danh sách dựa trên chuỗi tìm kiếm
+            listFilter = items.Where(item => item.ToLower().Contains(filter)).ToList();
+            IsKeyPress = true;
+            // Cập nhật ComboBox với
+            // các mục đã lọc
+            IsLoad = true;
+            G.listProgram.DataSource = new BindingSource(listFilter, null);
+
+        }
+
         string PO = "";
         private void btnEnter_Click(object sender, EventArgs e)
         {
-            SQL_DelectPO();
+          if(  MessageBox.Show("Bạn chắc chắn muốn xóa dữ liệu P/O này ?","Sure",MessageBoxButtons.YesNo)==DialogResult.No)
+            {
+                return;
+            }    
+            try
+            {
+                 SQL_DelectPO();
 
             PO = "";
+                try
+                {
+                    DataTable dt = G.Server.Table("PO", "PO", "", G.cnnPO, " ORDER BY Date DESC");
+                    if (dt.Rows.Count > 0)
+                    {
+                        var poList = dt.AsEnumerable().Select(row => row["PO"]).ToList();
+                        txtPO.DataSource = poList;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Ghi lại ngoại lệ để dễ kiểm tra
+                    Console.WriteLine(ex.Message);
+                }
+            }
+            catch(Exception ex)
+            {
+
+            }
+           
 
         }
 

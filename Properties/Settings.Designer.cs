@@ -22,5 +22,29 @@ namespace AD_RFID.Properties {
                 return defaultInstance;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string macAdd {
+            get {
+                return ((string)(this["macAdd"]));
+            }
+            set {
+                this["macAdd"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool IsLockTrial {
+            get {
+                return ((bool)(this["IsLockTrial"]));
+            }
+            set {
+                this["IsLockTrial"] = value;
+            }
+        }
     }
 }

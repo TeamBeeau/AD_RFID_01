@@ -156,30 +156,30 @@ namespace AD_RFID
 
             
             CRecipeCamera.instance.LoadConfig(strFileName2);
-            try
-            {
+            //try
+            //{
 
-                HTuple MaxW=0, MaxH=0;
-                HOperatorSet.GetFramegrabberParam(G.FormMain.AcqHandle, "WidthMax", out MaxW);
-                HOperatorSet.GetFramegrabberParam(G.FormMain.AcqHandle, "HeightMax", out MaxH);
-                MaxHeight = MaxH;
-                MaxWidth = MaxW;
-            }
-            catch(Exception ex)
-            {
+            //    HTuple MaxW=0, MaxH=0;
+            //    HOperatorSet.GetFramegrabberParam(G.FormMain.AcqHandle, "WidthMax", out MaxW);
+            //    HOperatorSet.GetFramegrabberParam(G.FormMain.AcqHandle, "HeightMax", out MaxH);
+            //    MaxHeight = MaxH;
+            //    MaxWidth = MaxW;
+            //}
+            //catch(Exception ex)
+            //{
 
-            }
+            //}
             //trackWidth.Maximum = MaxWidth;
             //trackHeight.Maximum = MaxHeight;
-            trackWidth.Value =(int) CRecipeCamera.instance.config.hvUpCameraResCol;
-            trackHeight.Value = (int)CRecipeCamera.instance.config.hvUpCameraResRow;
-            trackOffSetX.Maximum = (int)MaxWidth - trackWidth.Value;
-            trackOffSetY.Maximum = (int)MaxHeight - trackHeight.Value;
-            trackOffSetX.Value = (int)CRecipeCamera.instance.config.hvUpROI_COL1;
-            trackOffSetY.Value = (int)CRecipeCamera.instance.config.hvUpROI_ROW1;
+          //  trackWidth.Value =(int) CRecipeCamera.instance.config.hvUpCameraResCol;
+          //  trackHeight.Value = (int)CRecipeCamera.instance.config.hvUpCameraResRow;
+            //trackOffSetX.Maximum = (int)MaxWidth - trackWidth.Value;
+            //trackOffSetY.Maximum = (int)MaxHeight - trackHeight.Value;
+            //trackOffSetX.Value = (int)CRecipeCamera.instance.config.hvUpROI_COL1;
+            //trackOffSetY.Value = (int)CRecipeCamera.instance.config.hvUpROI_ROW1;
 
-            trackWidth.Maximum = (int)MaxWidth - trackOffSetX.Value;
-            trackHeight.Maximum = (int)MaxHeight - trackOffSetY.Value;
+            //trackWidth.Maximum = (int)MaxWidth - trackOffSetX.Value;
+            //trackHeight.Maximum = (int)MaxHeight - trackOffSetY.Value;
 
             // cbReSolution.Text = CRecipeCamera.instance.config.hvDwCameraResCol + "x" + CRecipeCamera.instance.config.hvDwCameraResRow;
             btnRaw.IsCLick = G.Config.IsSaveRaw;
@@ -259,11 +259,11 @@ namespace AD_RFID
         private void trackWidth_ValueChanged(object sender, EventArgs e)
         {
            
-            CRecipeCamera.instance.config.hvUpCameraResCol=trackWidth.Value;
-            trackOffSetX.Maximum = (int)MaxWidth - (int)CRecipeCamera.instance.config.hvUpCameraResCol;
-            lbWidth.Text = trackWidth.Value + "";
             if (!G.FormMain.bUpCameraLive)
             {
+                CRecipeCamera.instance.config.hvUpCameraResCol = trackWidth.Value;
+                trackOffSetX.Maximum = (int)MaxWidth - (int)CRecipeCamera.instance.config.hvUpCameraResCol;
+                lbWidth.Text = trackWidth.Value + "";
                 try
                 {
                    // HOperatorSet.SetFramegrabberParam(G.FormMain.AcqHandle, "OffsetX", (int)0);
@@ -276,17 +276,22 @@ namespace AD_RFID
 
         private void trackHeight_ValueChanged(object sender, EventArgs e)
         {
-            CRecipeCamera.instance.config.hvUpCameraResRow = trackHeight.Value;
-            trackOffSetY.Maximum = (int)MaxHeight - (int)CRecipeCamera.instance.config.hvUpCameraResRow;
-            lbHeight.Text = trackHeight.Value + "";
+          
             if (!G.FormMain.bUpCameraLive)
             {
+                CRecipeCamera.instance.config.hvUpCameraResRow = trackHeight.Value;
+                trackOffSetY.Maximum = (int)MaxHeight - (int)CRecipeCamera.instance.config.hvUpCameraResRow;
+                lbHeight.Text = trackHeight.Value + "";
                 try
                 {
                     //  HOperatorSet.SetFramegrabberParam(G.FormMain.AcqHandle, "OffsetY", (int)0);
                     HOperatorSet.SetFramegrabberParam(G.FormMain.AcqHandle, "Height", (int)(CRecipeCamera.instance.config.hvUpCameraResRow));
                 }
                 catch (Exception ex) { MessageBox.Show(ex.Message); }
+            }
+            else
+            {
+
             }
         }
 
@@ -322,11 +327,11 @@ namespace AD_RFID
             CRecipeCamera.instance.config.iniUpCameraGain = (int)txtUpCameraGain.Value;
             try
             {
-                HOperatorSet.SetFramegrabberParam(G.FormMain.AcqHandle, "Gain", CRecipeCamera.instance.config.iniUpExposureTime);
+                HOperatorSet.SetFramegrabberParam(G.FormMain.AcqHandle, "Gain", CRecipeCamera.instance.config.iniUpCameraGain);
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                MessageBox.Show("Set Gain  Error");
             }
         }
 
@@ -339,11 +344,21 @@ namespace AD_RFID
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                MessageBox.Show("Set Exposure Time Error");
             }
         }
 
         private void panel11_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void trackWidth_Scroll(object sender, EventArgs e)
         {
 
         }

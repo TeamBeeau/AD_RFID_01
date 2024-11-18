@@ -310,7 +310,7 @@ namespace AD_RFID
             this.btnIsModel.Name = "btnIsModel";
             this.btnIsModel.Size = new System.Drawing.Size(70, 49);
             this.btnIsModel.TabIndex = 4;
-            this.btnIsModel.Text = "Model";
+            this.btnIsModel.Text = "PO";
             this.btnIsModel.UseVisualStyleBackColor = false;
             this.btnIsModel.Click += new System.EventHandler(this.btnIsModel_Click);
             // 

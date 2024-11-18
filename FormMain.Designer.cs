@@ -36,7 +36,7 @@ namespace AD_RFID
             this.panel1 = new System.Windows.Forms.Panel();
             this.panel12 = new System.Windows.Forms.Panel();
             this.panel15 = new System.Windows.Forms.Panel();
-            this.panel7 = new System.Windows.Forms.Panel();
+            this.pPro = new System.Windows.Forms.Panel();
             this.btnSaveAs = new System.Windows.Forms.Button();
             this.btnLoadProjectModel = new System.Windows.Forms.Button();
             this.lbPN = new System.Windows.Forms.Label();
@@ -130,7 +130,7 @@ namespace AD_RFID
             this.panel1.SuspendLayout();
             this.panel12.SuspendLayout();
             this.panel15.SuspendLayout();
-            this.panel7.SuspendLayout();
+            this.pPro.SuspendLayout();
             this.panel37.SuspendLayout();
             this.panel38.SuspendLayout();
             this.panel24.SuspendLayout();
@@ -175,24 +175,24 @@ namespace AD_RFID
             // panel15
             // 
             this.panel15.BackColor = System.Drawing.Color.Transparent;
-            this.panel15.Controls.Add(this.panel7);
+            this.panel15.Controls.Add(this.pPro);
             this.panel15.Controls.Add(this.panel37);
             resources.ApplyResources(this.panel15, "panel15");
             this.panel15.Name = "panel15";
             // 
-            // panel7
+            // pPro
             // 
-            this.panel7.Controls.Add(this.btnSaveAs);
-            this.panel7.Controls.Add(this.btnLoadProjectModel);
-            this.panel7.Controls.Add(this.lbPN);
-            this.panel7.Controls.Add(this.txtProjectNo);
-            resources.ApplyResources(this.panel7, "panel7");
-            this.panel7.Name = "panel7";
+            this.pPro.Controls.Add(this.btnSaveAs);
+            this.pPro.Controls.Add(this.btnLoadProjectModel);
+            this.pPro.Controls.Add(this.lbPN);
+            this.pPro.Controls.Add(this.txtProjectNo);
+            resources.ApplyResources(this.pPro, "pPro");
+            this.pPro.Name = "pPro";
             // 
             // btnSaveAs
             // 
-            this.btnSaveAs.BackColor = System.Drawing.SystemColors.ButtonFace;
             resources.ApplyResources(this.btnSaveAs, "btnSaveAs");
+            this.btnSaveAs.BackColor = System.Drawing.SystemColors.ButtonFace;
             this.btnSaveAs.ForeColor = System.Drawing.Color.Black;
             this.btnSaveAs.Image = global::AD_RFID.Properties.Resources.icons8_save_as_30;
             this.btnSaveAs.Name = "btnSaveAs";
@@ -201,8 +201,8 @@ namespace AD_RFID
             // 
             // btnLoadProjectModel
             // 
-            this.btnLoadProjectModel.BackColor = System.Drawing.SystemColors.ButtonFace;
             resources.ApplyResources(this.btnLoadProjectModel, "btnLoadProjectModel");
+            this.btnLoadProjectModel.BackColor = System.Drawing.SystemColors.ButtonFace;
             this.btnLoadProjectModel.ForeColor = System.Drawing.Color.Black;
             this.btnLoadProjectModel.Image = global::AD_RFID.Properties.Resources.Down_Button;
             this.btnLoadProjectModel.Name = "btnLoadProjectModel";
@@ -219,6 +219,8 @@ namespace AD_RFID
             // 
             resources.ApplyResources(this.txtProjectNo, "txtProjectNo");
             this.txtProjectNo.Name = "txtProjectNo";
+            this.txtProjectNo.TextChanged += new System.EventHandler(this.txtProjectNo_TextChanged);
+            this.txtProjectNo.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtProjectNo_KeyDown);
             // 
             // panel37
             // 
@@ -298,6 +300,7 @@ namespace AD_RFID
             this.btnHelp.Image = global::AD_RFID.Properties.Resources.icons8_help_40;
             this.btnHelp.Name = "btnHelp";
             this.btnHelp.UseVisualStyleBackColor = false;
+            this.btnHelp.Click += new System.EventHandler(this.btnHelp_Click);
             // 
             // btnSet
             // 
@@ -801,6 +804,7 @@ namespace AD_RFID
             resources.ApplyResources(this.label1, "label1");
             this.label1.ForeColor = System.Drawing.Color.Black;
             this.label1.Name = "label1";
+            this.label1.Click += new System.EventHandler(this.label1_Click);
             // 
             // pictureBox1
             // 
@@ -885,6 +889,7 @@ namespace AD_RFID
             this.Controls.Add(this.panel1);
             this.Name = "FormMain";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FormMain_FormClosing);
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.FormMain_FormClosed);
             this.Load += new System.EventHandler(this.FormMain_Load);
             this.Shown += new System.EventHandler(this.FormMain_Shown);
@@ -892,8 +897,8 @@ namespace AD_RFID
             this.panel1.ResumeLayout(false);
             this.panel12.ResumeLayout(false);
             this.panel15.ResumeLayout(false);
-            this.panel7.ResumeLayout(false);
-            this.panel7.PerformLayout();
+            this.pPro.ResumeLayout(false);
+            this.pPro.PerformLayout();
             this.panel37.ResumeLayout(false);
             this.panel38.ResumeLayout(false);
             this.panel24.ResumeLayout(false);
@@ -930,7 +935,6 @@ namespace AD_RFID
         private Panel panel12;
         private Panel pModel;
         private Panel panel5;
-        private StatusStrip statusStrip1;
         private Panel panel6;
         private TextBox textBox9;
         private TextBox textBox10;
@@ -950,13 +954,12 @@ namespace AD_RFID
         private Button btnSet;
         private Panel panel15;
         private Panel panel37;
-        private Panel panel7;
+        private Panel pPro;
         private Label lbPN;
         private Button btnLoadProjectModel;
         private Panel panel38;
         private Button BtnRun;
         private Button btnLang;
-        private ToolStripStatusLabel lbCycleTime;
         private Panel panel16;
         private Panel panel11;
         private Panel panel10;
@@ -984,11 +987,6 @@ namespace AD_RFID
         private Button btnResetImage;
         private Panel panel17;
         private Button btnSelectZoomRegion;
-        public ToolStripStatusLabel lbPCI;
-        public ToolStripStatusLabel lbCam;
-        private ToolStripStatusLabel txtGrapImageTime;
-        private ToolStripStatusLabel toolStripStatusLabel1;
-        private ToolStripStatusLabel txtDealWithTime;
         private Panel panel57;
         private Label txtDoubleNum;
         private Label label35;
@@ -1027,5 +1025,12 @@ namespace AD_RFID
         public System.ComponentModel.BackgroundWorker workWebCam;
         private Button btnDelete;
         private ComboBox txtPO;
+        private StatusStrip statusStrip1;
+        public ToolStripStatusLabel lbCam;
+        public ToolStripStatusLabel lbPCI;
+        private ToolStripStatusLabel lbCycleTime;
+        private ToolStripStatusLabel txtGrapImageTime;
+        private ToolStripStatusLabel toolStripStatusLabel1;
+        private ToolStripStatusLabel txtDealWithTime;
     }
 }
