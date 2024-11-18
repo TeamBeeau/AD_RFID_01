@@ -73,9 +73,6 @@
       <HintPath>C:\Users\Nguyen Chi Tu\Desktop\CheckMark20191130 EN\Software\libuser.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.VisualBasic" />
-    <Reference Include="MvCameraControl.Net">
-      <HintPath>C:\Program Files (x86)\MVS\Development\Bin\Anycpu\MvCameraControl.Net.dll</HintPath>
-    </Reference>
     <Reference Include="OpenCvSharp, Version=1.0.0.0, Culture=neutral, PublicKeyToken=6adad1e807fea099, processorArchitecture=MSIL">
       <HintPath>packages\OpenCvSharp4.4.2.0.20191223\lib\net461\OpenCvSharp.dll</HintPath>
     </Reference>
@@ -138,7 +135,21 @@
     <Compile Include="Core\CSystemConfigData.cs" />
     <Compile Include="Core.include\ELogLevel.cs" />
     <Compile Include="Core.include\ICLogAssistant.cs" />
+    <Compile Include="Cryto.cs" />
     <Compile Include="DASK.cs" />
+    <Compile Include="Decompile.cs" />
+    <Compile Include="FormActive.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormActive.Designer.cs">
+      <DependentUpon>FormActive.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormLoad.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormLoad.Designer.cs">
+      <DependentUpon>FormLoad.cs</DependentUpon>
+    </Compile>
     <Compile Include="FormMain.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -146,6 +157,7 @@
       <DependentUpon>FormMain.cs</DependentUpon>
     </Compile>
     <Compile Include="Global.cs" />
+    <Compile Include="KeyAcitve.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Report.cs">
@@ -176,6 +188,12 @@
     <Compile Include="WebCam.Designer.cs">
       <DependentUpon>WebCam.cs</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="FormActive.resx">
+      <DependentUpon>FormActive.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormLoad.resx">
+      <DependentUpon>FormLoad.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="FormMain.resx">
       <DependentUpon>FormMain.cs</DependentUpon>
     </EmbeddedResource>
@@ -447,12 +465,6 @@
     <None Include="Resources\icons8-save-as-30.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\halcondotnet\halcondotnet.csproj">
-      <Project>{104d7e85-ec58-439d-bc08-df9fb6e18435}</Project>
-      <Name>halcondotnet</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resources\Down Button1.png" />
   </ItemGroup>
   <ItemGroup>
@@ -467,6 +479,10 @@
   <ItemGroup>
     <Content Include="icon.ico" />
     <Content Include="Refresh.png" />
+    <None Include="Resources\Key_1.png" />
+    <None Include="Resources\Download1.png" />
+    <None Include="Resources\Delete.png" />
+    <None Include="Resources\Delete.jpg" />
     <None Include="Resources\Thumbnail_180x174_MountArea_Normal.jpg" />
     <None Include="Resources\BID_UNDERBUTTON_72PIX_FORTYPEC_NORMAL_CENTER.jpg" />
     <None Include="Resources\Thumbnail_180x174_MountArea_Down.jpg" />
@@ -477,6 +493,12 @@
     <None Include="Resources\BID_UNDERBUTTON_72PIX_FORTYPEC_ACTIVE_CENTER.jpg" />
     <None Include="Resources\BtnBlue2.png" />
     <None Include="Resources\BtnBlue1.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\halcondotnet\halcondotnet.csproj">
+      <Project>{104d7e85-ec58-439d-bc08-df9fb6e18435}</Project>
+      <Name>halcondotnet</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

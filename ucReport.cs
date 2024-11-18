@@ -25,7 +25,7 @@ namespace AD_RFID
             var col4 = new DataGridViewTextBoxColumn();
             var col5 = new DataGridViewTextBoxColumn();
             var col6 = new DataGridViewTextBoxColumn();
-            // var col7 = new DataGridViewImageColumn();
+             var col7 = new DataGridViewTextBoxColumn();
             // var col8 = new DataGridViewImageColumn();
 
             col1.HeaderText = "STT";
@@ -41,10 +41,19 @@ namespace AD_RFID
             col2.DefaultCellStyle.Font = new Font("Arial", 18);
             col2.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
             col2.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            col7.HeaderText = "Model";
+            col7.Name = "Model";
+            col7.DataPropertyName = "Model";
+            col7.Width = 200;
+            col7.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            col7.DefaultCellStyle.Font = new Font("Arial", 18);
+            col7.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
+
+
             col3.HeaderText = "PO";
             col3.Name = "PO";
             col3.DataPropertyName = "PO";
-            col3.Width = 250;
+            col3.Width = 200;
             col3.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
             col3.DefaultCellStyle.Font = new Font("Arial", 18);
             col3.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
@@ -52,7 +61,7 @@ namespace AD_RFID
             col4.HeaderText = "OK";
             col4.Name = "OK";
             col4.DataPropertyName = "OK";
-            col4.Width = 140;
+            col4.Width = 100;
             col4.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
             col4.DefaultCellStyle.Font = new Font("Arial", 30, FontStyle.Bold);
             col4.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
@@ -60,7 +69,7 @@ namespace AD_RFID
             col5.HeaderText = "NG";
             col5.Name = "NG";
             col5.DataPropertyName = "NG";
-            col5.Width = 200;
+            col5.Width = 100;
             col5.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
             col5.DefaultCellStyle.Font = new Font("Arial", 30);
             col5.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
@@ -90,7 +99,7 @@ namespace AD_RFID
 
             dataView.DataSource = null;
             dataView.RowTemplate.Height = 50;
-            dataView.Columns.AddRange(new DataGridViewColumn[] { col1, col2, col3, col4, col5, col6 });
+            dataView.Columns.AddRange(new DataGridViewColumn[] { col1, col2,col7, col3, col4, col5, col6 });
             //String path = Path.Combine(Environment.CurrentDirectory, "DataReport.mdf");
             // G._pathSqlMaster= @"Data Source=(LocalDB)\v11.0;AttachDbFilename="+path+";Integrated Security=True";
 
@@ -112,9 +121,9 @@ namespace AD_RFID
                 File.Copy(@"Report\Default.mdf", nameFileSQL);
                 File.Exists(@"Report\Default.mdf");
             }
-            //Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=D:\ChiTu\Codes\BeeIV2\bin\Release\Report\Default.mdf;Integrated Security=True;Connect Timeout=30
+            //Data Source=(LocalDB)\V11.0;AttachDbFilename=D:\ChiTu\Codes\BeeIV2\bin\Release\Report\Default.mdf;Integrated Security=True;Connect Timeout=30
             String path = Path.Combine(Environment.CurrentDirectory, nameFileSQL);
-            G._pathSqlMaster = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=" + path + ";Integrated Security=True;Connect Timeout=30"; ;
+            G._pathSqlMaster = @"Data Source=(LocalDB)\V11.0;AttachDbFilename=" + path + ";Integrated Security=True;Connect Timeout=30"; ;
             G.cnn = new SqlConnection(G._pathSqlMaster);
            // G.cnn.Close();
             G.cnn.Open();
@@ -253,12 +262,12 @@ namespace AD_RFID
                     continue;
                 if (file.Contains("PO"))
                     continue;
-                String path = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=" + file + ";Integrated Security=True;Connect Timeout=30"; ;
+                String path = @"Data Source=(LocalDB)\V11.0;AttachDbFilename=" + file + ";Integrated Security=True;Connect Timeout=30"; ;
                 con = new SqlConnection(path);
                 con.Open();
               
          
-                DataTable dtOne = Table("STT,Date,PO,OK,NG,Status", "Report", sql, con);
+                DataTable dtOne = Table("STT,Date,Model,PO,OK,NG,Status", "Report", sql, con);
                 // DataTable dtTwo = Table("Raw", "Report", sql, con);
                 // DataTable dtThree = Table("Result", "Report", sql, con);
                 dtAll.Merge(dtOne);
@@ -380,7 +389,7 @@ namespace AD_RFID
                 if (G.cnn.State == ConnectionState.Closed) {
                     Connect_SQL();
                 }
-                DataTable dt = Table("PO,STT", "Report", "", G.cnn);
+                DataTable dt = Table("Model,STT", "Report", "", G.cnn);
                 List<String> _listName = SQL_List(0, dt);
                 _listName = _listName.Distinct().ToList();
                 cbModel.DataSource = _listName;
@@ -423,7 +432,7 @@ namespace AD_RFID
         }
         public void Report_Load(object sender, EventArgs e)
         {
-            DataTable dt = Table("PO,STT", "Report", "", G.cnn);
+            DataTable dt = Table("Model,STT", "Report", "", G.cnn);
             List<String> _listName = SQL_List(0, dt);
             _listName = _listName.Distinct().ToList();
             cbModel.DataSource = _listName;
@@ -444,7 +453,7 @@ namespace AD_RFID
             {
                 btnIsModel.BackColor = Color.Green;
                 btnIsModel.ForeColor = Color.White;
-                _sModel = "PO='" + cbModel.Text + "'";
+                _sModel = "Model='" + cbModel.Text + "'";
                 cbModel.Enabled = true;
                 btnDown.Enabled = true;
             }
@@ -463,7 +472,7 @@ namespace AD_RFID
         {
             if (_isLoad)
             {
-                _sModel = "PO='" + cbModel.Text + "'";
+                _sModel = "Model='" + cbModel.Text + "'";
                 // ShowData();
             }
             _isLoad = true;
@@ -491,11 +500,13 @@ namespace AD_RFID
             }
             else if (ckOK.Checked)
             {
-                _sStatus = "Status='OK'";
+                if (!ckNG.Checked)
+                    _sStatus = "Status='OK'";
             }
             else if (ckNG.Checked)
             {
-                _sStatus = "Status='NG'";
+                if (!ckOK.Checked)
+                    _sStatus = "Status!='OK'";
             }
             //  ShowData();
         }
@@ -509,11 +520,12 @@ namespace AD_RFID
             }
             else if (ckOK.Checked)
             {
-                _sStatus = "Status='OK'";
+                if (!ckNG.Checked)
+                    _sStatus = "Status='OK'";
             }
             else if (ckNG.Checked)
-            {
-                _sStatus = "Status='NG'";
+            {if(!ckOK.Checked)
+                _sStatus = "Status!='OK'";
             }
             //  ShowData();
         }
@@ -595,7 +607,7 @@ namespace AD_RFID
             _sExel += Environment.NewLine;
             _sExel += Environment.NewLine;
            
-            _sExel += "STT" + "\t" + "DATE" + "\t" + "PO" + "\t" + "OK" + "\t" + "NG" + "\t" + "Status";
+            _sExel += "STT" + "\t" + "DATE" + "\t" + "Model" + "\t" + "PO" + "\t" + "OK" + "\t" + "NG" + "\t" + "Status";
             _sExel += Environment.NewLine;
             System.IO.DirectoryInfo di = new DirectoryInfo(Path.GetDirectoryName(pathSave));
 
@@ -635,7 +647,7 @@ namespace AD_RFID
 
 
                     SqlConnection con;
-                    String path = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=" + foder + ";Integrated Security=True;Connect Timeout=30"; ;
+                    String path = @"Data Source=(LocalDB)\V11.0;AttachDbFilename=" + foder + ";Integrated Security=True;Connect Timeout=30"; ;
                     con = new SqlConnection(path);
                     con.Open();
                     // DataTable dtOne = Table("Raw", "Report", "STT='" + dtAll.Rows[i]["STT"].ToString() + "'", con);
