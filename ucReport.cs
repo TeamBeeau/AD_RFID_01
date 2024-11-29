@@ -389,7 +389,7 @@ namespace AD_RFID
                 if (G.cnn.State == ConnectionState.Closed) {
                     Connect_SQL();
                 }
-                DataTable dt = Table("PO,STT", "Report", "", G.cnn);
+                DataTable dt = Table("Model,STT", "Report", "", G.cnn);
                 List<String> _listName = SQL_List(0, dt);
                 _listName = _listName.Distinct().ToList();
                 cbModel.DataSource = _listName;
@@ -432,7 +432,7 @@ namespace AD_RFID
         }
         public void Report_Load(object sender, EventArgs e)
         {
-            DataTable dt = Table("PO,STT", "Report", "", G.cnn);
+            DataTable dt = Table("Model,STT", "Report", "", G.cnn);
             List<String> _listName = SQL_List(0, dt);
             _listName = _listName.Distinct().ToList();
             cbModel.DataSource = _listName;
@@ -453,7 +453,7 @@ namespace AD_RFID
             {
                 btnIsModel.BackColor = Color.Green;
                 btnIsModel.ForeColor = Color.White;
-                _sModel = "PO='" + cbModel.Text + "'";
+                _sModel = "Model='" + cbModel.Text + "'";
                 cbModel.Enabled = true;
                 btnDown.Enabled = true;
             }
@@ -472,7 +472,7 @@ namespace AD_RFID
         {
             if (_isLoad)
             {
-                _sModel = "PO='" + cbModel.Text + "'";
+                _sModel = "Model='" + cbModel.Text + "'";
                 // ShowData();
             }
             _isLoad = true;
